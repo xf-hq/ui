@@ -4,12 +4,12 @@
   "module": "source/index.ts",
   "type": "module",
   "dependencies": {
-    "@wessberg/connection-observer": "latest",
+    "@wessberg/connection-observer": "latest"
+  },
+  "optionalDependencies": {
     "remark": "latest",
     "remark-gfm": "latest",
-    "remark-html": "latest"
-  },
-  "peerDependencies": {
+    "remark-html": "latest",
     "monaco-editor": "latest"
   }
 }
