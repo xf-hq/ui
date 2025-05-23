@@ -1,0 +1,39 @@
+{
+  // "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleDetection": "force",
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "sourceMap": true,
+
+    // Bundler mode
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+    "isolatedModules": true,
+
+    "allowSyntheticDefaultImports": true,
+    "noErrorTruncation": true,
+
+    "strict": false,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "exactOptionalPropertyTypes": true,
+
+    "paths": {
+      "@xf-common/*": ["../xf-common/source/*"],
+    },
+  },
+  "include": [
+    "source/**/*.ts",
+    "../xf-common/source/**/*.ts",
+  ],
+  "exclude": [
+    "**/*.old.ts",
+    "**/OLD.*"
+  ]
+}

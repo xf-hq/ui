@@ -1,0 +1,15 @@
+{
+  "name": "sx-ui",
+  "main": "source/index.ts",
+  "module": "source/index.ts",
+  "type": "module",
+  "dependencies": {
+    "@wessberg/connection-observer": "latest",
+    "remark": "latest",
+    "remark-gfm": "latest",
+    "remark-html": "latest"
+  },
+  "peerDependencies": {
+    "monaco-editor": "latest"
+  }
+}
