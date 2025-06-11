@@ -7,7 +7,7 @@ import { DOMNodeRange } from './dom-node-range';
 
 export function appendDynamicDOMNodeRange (location: DOMLocationPointer, source: ArraySource<DOMNodeRange>): DisposableFunction {
   const controller = new DynamicDOMController(location);
-  const sub = source.subscribe((event) => controller.signal(event));
+  const sub = source.subscribe((event) => controller.event(event));
   controller.push(...sub.__array);
   return disposableFunction(sub);
 }
@@ -15,7 +15,7 @@ export function appendDynamicDOMNodeRange (location: DOMLocationPointer, source:
 class DynamicDOMController implements Subscribable.Receiver<[event: ArraySource.Event<DOMNodeRange>], []> {
   constructor (public readonly location: DOMLocationPointer) {}
 
-  signal (event: ArraySource.Event<DOMNodeRange>) {
+  event (event: ArraySource.Event<DOMNodeRange>) {
     switch (event.kind) {
       case 'push': this.push(...event.values); break;
       case 'pop': this.pop(); break;
@@ -106,7 +106,7 @@ class DynamicDOMController implements Subscribable.Receiver<[event: ArraySource.
   }
   batch (events: ArraySource.Event<DOMNodeRange>[]) {
     for (let i = 0; i < events.length; ++i) {
-      this.signal(events[i]);
+      this.event(events[i]);
     }
   }
 }

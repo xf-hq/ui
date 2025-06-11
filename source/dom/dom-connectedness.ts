@@ -29,7 +29,7 @@ export namespace DOMConnectedness {
   function onConnectionEvent (entries: ConnectionRecord[]) {
     for (const { connected, target } of entries) {
       const source = sources.get(target);
-      if (source) source.signal(connected);
+      if (source) source.event(connected);
     }
   }
 }
