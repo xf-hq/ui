@@ -1,4 +1,4 @@
-import type { StringSource } from '@xf-common/dynamic';
+import { ValueSource, type StringSource } from '@xf-common/dynamic';
 import { renderMarkdownToHtmlSync } from '../markdown/markdown-helpers';
 import type { DOMContext } from './dom-context';
 import { DOMLocationPointer, isDOMLocationPointer } from './dom-location-pointer';
@@ -11,24 +11,39 @@ export function appendDynamicMarkdown (location: DOMContext | DOMLocationPointer
   else if (isDOMLocationPointer(location)) location.append(containerElement);
   else if (isDOMNodeRange(location)) location.lastActiveElementRequired.appendChild(containerElement);
   else location.domInsertionLocation.append(containerElement);
-  return source.subscribe((sub) => {
+  return source.subscribe(new TextReceiver(containerElement, options));
+}
+
+class TextReceiver implements ValueSource.Receiver<string, []> {
+  constructor (
+    private readonly containerElement: Element,
+    private readonly options?: DynamicMarkdownOptions,
+  ) {}
+  #subscription: ValueSource.Subscription<string>;
+  #log: { value: boolean; html: boolean };
+  init (subscription: ValueSource.Subscription<string>): void {
+    this.#subscription = subscription;
     const log = { value: false, html: false };
+    const options = this.options;
     if (options?.log) {
       if (typeof options.log === 'boolean') log.value = log.html = options.log;
       else Object.assign(log, options.log);
     }
-    const render = (value: string) => {
-      // let msg: ConsoleMessage | undefined;
-      // if (log.value || log.html) msg = cmsg.std.squareBracketed(cmsg.std.mc.lightBlue('appendDynamicMarkdown')).setMode('group').beginPrint();
-      // if (log.value) cmsg.std.punctuated([cmsg.std.mc.green('Markdown'), ':']).printGroup(() => console.log(value));
-      const html = renderMarkdownToHtmlSync(value);
-      containerElement.innerHTML = html;
-      // if (log.html) cmsg.std.punctuated([cmsg.std.mc.green('HTML'), ':']).printGroup(() => console.log(html));
-      // msg?.endPrint();
-    };
-    render(sub.value);
-    return render;
-  });
+    this._render(subscription.value);
+  }
+  event (value: string): void {
+    this._render(value);
+  }
+
+  private _render (value: string): void {
+    // let msg: ConsoleMessage | undefined;
+    // if (this.#log.value || this.#log.html) msg = cmsg.std.squareBracketed(cmsg.std.mc.lightBlue('appendDynamicMarkdown')).setMode('group').beginPrint();
+    // if (this.#log.value) cmsg.std.punctuated([cmsg.std.mc.green('Markdown'), ':']).printGroup(() => console.log(value));
+    const html = renderMarkdownToHtmlSync(value);
+    this.containerElement.innerHTML = html;
+    // if (this.#log.html) cmsg.std.punctuated([cmsg.std.mc.green('HTML'), ':']).printGroup(() => console.log(html));
+    // msg?.endPrint();
+  }
 }
 
 export interface DynamicMarkdownOptions {
