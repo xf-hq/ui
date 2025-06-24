@@ -53,7 +53,6 @@ export namespace DOMContext {
       bindDOM (dom: Element | DOMNodeRange | DOMView | string): this {
         if (isString(dom)) dom = this.domActiveRange.querySelectorRequired(dom);
         else if (isDOMView(dom)) dom = dom.dom;
-        console.debug(dom);
         return this.bindDOMRange(dom).bindDOMLocation(dom);
       }
 

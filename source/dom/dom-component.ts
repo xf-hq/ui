@@ -404,7 +404,10 @@ export namespace DOMComponent {
       #template?: HTMLTemplate;
 
       get styles (): ManagedStylesheet.OnDemandRuleSet | null {
-        return this.#styles ??= isDefined(this.#config.css) ? isString(this.#config.css) ? DOM.css(this.#config.css) : this.#config.css : null;
+        if (this.#styles) return this.#styles;
+        if (isUndefined(this.#config.css)) return this.#styles = null;
+        if (isString(this.#config.css)) return this.#styles ??= DOM.css(this.#config.css);
+        return this.#styles = this.#config.css as ManagedStylesheet.OnDemandRuleSet;
       }
       get template (): HTMLTemplate {
         return this.#template ??= isString(this.#config.html) ? DOM.html(this.#config.html) : this.#config.html;

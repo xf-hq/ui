@@ -6,7 +6,6 @@ export class WebSocketClient {
   constructor (ws: WebSocket, listener: WebSocketClient.Listener) {
     this.#ws = ws;
     this.#listener = listener;
-    const rand =  Math.random();
     ws.addEventListener('message', (event: MessageEvent) => this.#receive(event));
     ws.addEventListener('close', () => {
       console.warn(`The connection to the server was closed. Reconnecting...`);
@@ -49,8 +48,6 @@ export class WebSocketClient {
 export namespace WebSocketClient {
   export interface Listener {
     receiveMessage (type: PathReader, data: any): void;
-    connectedToServer? (client: WebSocketClient): void;
-    connectionFailed? (error: any): void;
     disconnectedFromServer? (): void;
     reconnectedToServer? (): void;
   }
@@ -62,14 +59,12 @@ export namespace WebSocketClient {
     console.debug(`Connecting to the server...`);
     return new Promise((resolve, reject) => tryConnect(wssurl, {
       ready: (ws: WebSocket) => {
-        console.debug(`Connected!`);
+        // console.debug(`Connected!`);
         const client = new WebSocketClient(ws, listener);
-        listener.connectedToServer?.(client);
         resolve(client);
       },
       failed: (error: any) => {
-        console.error(`Failed to connect to the server.`, error);
-        listener.connectionFailed?.(error);
+        // console.error(`Failed to connect to the server.`, error);
         reject(error);
       },
     }));

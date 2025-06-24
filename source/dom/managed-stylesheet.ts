@@ -1,7 +1,9 @@
+import { AssociativeRecordSource, Subscribable, ValueSource, type NumberSource, type StringSource } from '@xf-common/dynamic';
 import { disposableFunction, dispose } from '@xf-common/general/disposables';
 import { isDefined, isString, isUndefined } from '@xf-common/general/type-checking';
 import { TemplateLiteral } from '@xf-common/primitive';
 import type { DOMContext } from './dom-context';
+import { createChildAbortController } from '@xf-common/general/abort-signals';
 
 export class ManagedStylesheet implements Disposable {
   static insert (stylesheet: string): ManagedStylesheet {
@@ -32,12 +34,22 @@ export class ManagedStylesheet implements Disposable {
     return new StyleRule(sheet, rule);
   }
 
+  insertRuleSet (ruleSet: ManagedStylesheet.RuleSet): void;
+  insertRuleSet (abortSignal: AbortSignal, ruleSet: ManagedStylesheet.RuleSet): void;
+  insertRuleSet (arg0: AbortSignal | ManagedStylesheet.RuleSet, arg1?: ManagedStylesheet.RuleSet): void {}
+
   [Symbol.dispose] () {
     for (const child of this.#childSheets) dispose(child);
     document.adoptedStyleSheets = document.adoptedStyleSheets.filter((sheet) => sheet !== this.#sheet);
   }
 }
 export namespace ManagedStylesheet {
+  export type RuleSet = RuleSetRecord | AssociativeRecordSource<RuleSetRecord>;
+  export type RuleValue = string | number | StringSource | NumberSource;
+  export interface RuleSetRecord {
+    readonly [key: string]: RuleSet | RuleValue;
+  }
+
   export type OnDemandArg = OnDemandGroup | OnDemandRuleSet | string;
   export type OnDemandGroup = OnDemandArg[];
 
@@ -203,5 +215,18 @@ class OnDemandStaticGroupOfRuleSets extends ManagedStylesheet.OnDemandRuleSet {
       releaseFunctions.push(source.require(context));
     }
     return disposableFunction(releaseFunctions);
+  }
+}
+
+// Note to the agent: for child branches whose lifespan may be shorter than the parent branch, use child abort
+// controllers. Construct them with `createChildAbortController`, passing the parent abort signal as argument. You'll
+// get back a new abort controller already bound to the parent signal. If the child branch is no longer needed, abort
+// the child controller and get rid of it.
+
+namespace RuleSetInserter {
+  // INSTRUCTIONS:
+  // - You're going to be unfolding the value of `ruleSetSource` and applying them individually to the `sheet` object.
+  export function execute (abortSignal: AbortSignal | null, sheet: CSSStyleSheet, ruleSetSource: ManagedStylesheet.RuleSet): void {
+    // TODO.
   }
 }

@@ -65,6 +65,52 @@ export namespace DOM {
       valueOf (): string { return this.value; }
       [Symbol.toPrimitive] (): string { return this.value; }
     });
+
+    /**
+     * Sets or toggles the color scheme of the site.
+     * - If the argument is 'system', any existing override will be removed.
+     * - If the argument is null or it is omitted, the active overriding color theme will be toggled from whatever it is
+     *   currently set to (either by override, or by system preference if no override is currently set).
+     * @remarks
+     * As a prerequisite for this function to work, make sure to set this in the site's main stylesheet:
+     * ```css
+     * :where(html) {
+     *   --color-scheme: only dark;
+     *   color-scheme: var(--color-scheme);
+     * }
+     * ```
+     */
+    export function setOrToggleColorScheme (colorSchemeToSet?: 'light' | 'dark' | 'system' | null): 'light' | 'dark' {
+      const style = document.documentElement.style;
+      switch (colorSchemeToSet) {
+        case 'dark': colorSchemeToSet = 'dark'; break;
+        case 'light': colorSchemeToSet = 'light'; break;
+        case 'system': {
+          style.removeProperty('--color-scheme');
+          localStorage.removeItem('color-scheme');
+          return getSystemColorScheme();
+        }
+        default: {
+          const currentScheme = localStorage.getItem('color-scheme') as 'light' | 'dark' | null ?? getSystemColorScheme();
+          colorSchemeToSet = currentScheme === 'dark' ? 'light' : 'dark';
+        }
+      }
+      localStorage.setItem('color-scheme', colorSchemeToSet);
+      style.setProperty('--color-scheme', colorSchemeToSet);
+      return colorSchemeToSet;
+    }
+    export function loadColorSchemeOverride (): void {
+      const savedScheme = localStorage.getItem('color-scheme') as 'light' | 'dark' | null;
+      if (savedScheme) {
+        document.documentElement.style.setProperty('--color-scheme', savedScheme);
+      }
+    }
+    export function getActiveColorSchemeOverride (): 'light' | 'dark' | null {
+      return localStorage.getItem('color-scheme') as 'light' | 'dark' | null;
+    }
+    export function getSystemColorScheme (): 'light' | 'dark' {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
   }
 
   export function setStyles (element: Element, styles: Record<string, any>): void;

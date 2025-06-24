@@ -1,5 +1,4 @@
 import { PathReader } from '@xf-common/facilities/path-reader';
-import { disposableFunction } from '@xf-common/general/disposables';
 import { IdGenerator } from '@xf-common/general/ids-and-caching';
 import { isUndefined } from '@xf-common/general/type-checking';
 import { Messaging } from '@xf-common/network/messaging';
@@ -16,15 +15,11 @@ export class ServerBridge {
     this.network.send(message);
   }
 
-  initiateRequest (message: Messaging.Message, callback: (context: Messaging.InboundMessageContext) => void): DisposableFunction {
+  initiateRequest (abort: AbortSignal, message: Messaging.Message, callback: (context: Messaging.InboundMessageContext) => void): void {
     const id = IdGenerator.global();
     this.#pendingRequests.set(id, callback);
     this.send(Messaging.Message.Request(id, message));
-    return disposableFunction(() => {
-      if (this.#pendingRequests.delete(id)) {
-        this.send(Messaging.Message.Request.Cancel(id));
-      }
-    });
+    abort.addEventListener('abort', () => this.send(Messaging.Message.Request.Cancel(id)));
   }
 
   private receiveResponse (context: Messaging.InboundMessageContext) {

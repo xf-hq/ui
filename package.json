@@ -4,7 +4,13 @@
   "module": "source/index.ts",
   "type": "module",
   "dependencies": {
-    "@wessberg/connection-observer": "latest"
+    "@eslint/js": "^9.29.0",
+    "@stylistic/eslint-plugin": "^5.0.0",
+    "@types/bun": "^1.2.17",
+    "@typescript-eslint/tsconfig-utils": "^8.35.0",
+    "@wessberg/connection-observer": "latest",
+    "eslint": "^9.29.0",
+    "typescript-eslint": "^8.35.0"
   },
   "optionalDependencies": {
     "remark": "latest",
