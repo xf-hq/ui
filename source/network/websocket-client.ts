@@ -1,4 +1,3 @@
-import { PathReader } from '@xf-common/facilities/path-reader';
 import { isString } from '@xf-common/general/type-checking';
 import type { Messaging } from '@xf-common/network/messaging';
 
@@ -18,7 +17,7 @@ export class WebSocketClient {
 
   #receive (event: MessageEvent) {
     const message: Messaging.Message = JSON.parse(event.data);
-    this.#listener.receiveMessage(new PathReader(':', message.type), message.data);
+    this.#listener.receiveMessage(message);
   }
 
   #tryReconnect (wait = 1000) {
@@ -47,7 +46,7 @@ export class WebSocketClient {
 }
 export namespace WebSocketClient {
   export interface Listener {
-    receiveMessage (type: PathReader, data: any): void;
+    receiveMessage (message: Messaging.Message): void;
     disconnectedFromServer? (): void;
     reconnectedToServer? (): void;
   }
