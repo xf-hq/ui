@@ -36,7 +36,9 @@ export class ManagedStylesheet implements Disposable {
 
   insertRuleSet (ruleSet: ManagedStylesheet.RuleSet): void;
   insertRuleSet (abortSignal: AbortSignal, ruleSet: ManagedStylesheet.RuleSet): void;
-  insertRuleSet (arg0: AbortSignal | ManagedStylesheet.RuleSet, arg1?: ManagedStylesheet.RuleSet): void {}
+  insertRuleSet (arg0: AbortSignal | ManagedStylesheet.RuleSet, arg1?: ManagedStylesheet.RuleSet): void {
+    throw new Error(`Not Implemented`);
+  }
 
   [Symbol.dispose] () {
     for (const child of this.#childSheets) dispose(child);

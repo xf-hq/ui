@@ -314,7 +314,7 @@ export namespace DOMComponent {
       > extends Minimal {
         readonly components?: TComponents;
         contextType?: Context.Immediate.InterfaceType.OrNS<TContext> | ((context: DOMContext) => TContext);
-        render (context: TContext, ...args: TArgs): TView | (DOMView extends TView ? void : never);
+        render (context: TContext, ...args: TArgs): TView | (DOMView extends TView ? void : never) | void;
       }
       export function isStandard<
         TContext extends DOMContext,

@@ -1,12 +1,13 @@
+import { ConnectionObserver, type ConnectionRecord } from '@wessberg/connection-observer';
 import { Subscribable } from '@xf-common/dynamic';
 import { AssociativeWeakSet } from '@xf-common/facilities/weak-reference-management';
+import { disposeOnAbort } from '@xf-common/general/disposables';
 import { isUndefined } from '@xf-common/general/type-checking';
-import { ConnectionObserver, type ConnectionRecord } from '@wessberg/connection-observer';
 
 export namespace DOMConnectedness {
   export type Subscriber = Subscribable.Subscriber<[isConnected: boolean], []>;
 
-  export function observe (node: Node, subscriber: Subscriber): Disposable {
+  export function observe (abortSignal: AbortSignal, node: Node, subscriber: Subscriber): void {
     let source = sources.get(node);
     if (isUndefined(source)) {
       let observer: ConnectionObserver;
@@ -21,7 +22,7 @@ export namespace DOMConnectedness {
       });
       sources.set(node, source);
     }
-    return source.subscribe(subscriber);
+    disposeOnAbort(abortSignal, source.subscribe(subscriber));
   }
 
   const sources = new AssociativeWeakSet<Node, Subscribable.Controller<[isConnected: boolean]>>();

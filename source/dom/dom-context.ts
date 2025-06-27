@@ -1,19 +1,23 @@
+import type { ArraySource, StringSource, ValueSource } from '@xf-common/dynamic';
 import type { Compositional } from '@xf-common/facilities/compositional/compositional';
 import { Context } from '@xf-common/facilities/context';
 import { isArray, isDefined, isString } from '@xf-common/general/type-checking';
+import { renderMarkdownToHtmlSync } from '../markdown/markdown-helpers';
 import { DOMComponent, isDOMComponent } from './dom-component';
 import { DOM } from './dom-helpers';
 import { DOMLocationPointer, isDOMLocationPointer } from './dom-location-pointer';
 import { DOMNodeRange, isDOMNodeRange } from './dom-node-range';
 import { DOMView, isDOMView } from './dom-view';
+import type { DynamicMarkdownOptions } from './dynamic-markdown';
 import { HTMLTemplate } from './html-template';
 import type { ManagedStylesheet } from './managed-stylesheet';
+import { disposableFunction, dispose } from '@xf-common/general/disposables';
 
 export interface DOMContext<TComponents extends DOMComponent.Components = DOMComponent.Components> extends Compositional.ExtractInterface<typeof DOMContext.InterfaceType> {
   renderComponent<K extends keyof TComponents> (componentIdentifier: K, ...args: DOMComponent.InferArgs<TComponents[K]>): DOMComponent.InferView<TComponents[K]>;
   renderComponentInto<K extends keyof TComponents> (selector: string, componentIdentifier: K, ...args: DOMComponent.InferArgs<TComponents[K]>): DOMComponent.InferView<TComponents[K]>;
   renderComponentDetached<K extends keyof TComponents> (componentIdentifier: K, ...args: DOMComponent.InferArgs<TComponents[K]>): DOMComponent.InferView<TComponents[K]>;
-  renderComponentToSlotById<K extends keyof TComponents> (slotId: string, componentIdentifier: K, ...args: DOMComponent.InferArgs<TComponents[K]>): DOMComponent.InferView<TComponents[K]>;
+  renderComponentToTemplateId<K extends keyof TComponents> (slotId: string, componentIdentifier: K, ...args: DOMComponent.InferArgs<TComponents[K]>): DOMComponent.InferView<TComponents[K]>;
 }
 export namespace DOMContext {
   const _domActiveRange_ = Symbol('DOMContext.DOMActiveRange');
@@ -21,7 +25,7 @@ export namespace DOMContext {
   const _stylesheet_ = Symbol('DOMContext.Stylesheet');
   const _detachedByDefault_ = Symbol('DOMContext.DetachedByDefault');
 
-  type SpecialMethods<TComponents extends DOMComponent.Components> = Pick<DOMContext<TComponents>, 'renderComponent' | 'renderComponentToSlotById' | 'renderComponentInto' | 'renderComponentDetached'>;
+  type SpecialMethods<TComponents extends DOMComponent.Components> = Pick<DOMContext<TComponents>, 'renderComponent' | 'renderComponentToTemplateId' | 'renderComponentInto' | 'renderComponentDetached'>;
 
   export type InterfaceType = typeof InterfaceType;
   export const InterfaceType = Context.Immediate.InterfaceType.extend(($Class) => (
@@ -131,20 +135,28 @@ export namespace DOMContext {
       renderHTMLInto (selector: string, html: string): DOMNodeRange {
         return this.bindDOM(selector).renderHTML(html);
       }
+      renderMarkdownInto (selector: string, markdown: string): DOMNodeRange {
+        const html = renderMarkdownToHtmlSync(markdown);
+        return this.renderHTMLInto(selector, html);
+      }
       renderComponentInto<K extends keyof TComponents> (selector: string, componentIdentifier: K, ...args: DOMComponent.InferArgs<TComponents[K]>): DOMComponent.InferView<TComponents[K]> {
         return this.bindDOM(selector).renderComponent(componentIdentifier, ...args);
       }
 
-      renderToSlotById<TContext extends DOMContext, TArgs extends unknown[], TView extends DOMView> (this: TContext, id: string, target: DOMComponent.OrNS<TContext, TArgs, TView>, ...args: TArgs): TView {
+      renderToTemplateId<TContext extends DOMContext, TArgs extends unknown[], TView extends DOMView> (this: TContext, id: string, target: DOMComponent.OrNS<TContext, TArgs, TView>, ...args: TArgs): TView {
         return this.bindDOMTemplateSlotById(id).render(target, ...args);
       }
-      renderTextToSlotById (id: string, text: unknown = ''): DOMView.StaticTextNode {
+      renderTextToTemplateId (id: string, text: unknown = ''): DOMView.StaticTextNode {
         return this.bindDOMTemplateSlotById(id).renderText(text);
       }
-      renderHTMLToSlotById (id: string, html: string): DOMNodeRange {
+      renderHTMLToTemplateId (id: string, html: string): DOMNodeRange {
         return this.bindDOMTemplateSlotById(id).renderHTML(html);
       }
-      renderComponentToSlotById<K extends keyof TComponents> (slotId: string, componentIdentifier: K, ...args: DOMComponent.InferArgs<TComponents[K]>): DOMComponent.InferView<TComponents[K]> {
+      renderMarkdownToTemplateId (id: string, markdown: string): DOMNodeRange {
+        const html = renderMarkdownToHtmlSync(markdown);
+        return this.renderHTMLToTemplateId(id, html);
+      }
+      renderComponentToTemplateId<K extends keyof TComponents> (slotId: string, componentIdentifier: K, ...args: DOMComponent.InferArgs<TComponents[K]>): DOMComponent.InferView<TComponents[K]> {
         return this.bindDOMTemplateSlotById(slotId).renderComponent(componentIdentifier, ...args);
       }
 
@@ -215,11 +227,9 @@ export namespace DOMContext {
         return HTMLTemplate.extractByIdAsNodeRange(id, this.domActiveRange);
       }
 
-      createDOMView (dom: DOMNodeRange | ChildNode | 'expose-prebound-dom', disposable?: LooseDisposable): DOMView.ContextBound {
+      createDOMView (dom: DOMNodeRange | ChildNode | 'expose-prebound-dom' = 'expose-prebound-dom'): DOMView.ContextBound {
         const context = dom === 'expose-prebound-dom' ? this : this.bindDOMRange(dom);
-        const view = new DOMView.ContextBound(context);
-        if (disposable) view.attachDisposable(disposable);
-        return view;
+        return new DOMView.ContextBound(context);
       }
 
       setStyles (styles: Record<string, any>): void {
@@ -227,6 +237,70 @@ export namespace DOMContext {
           if (element['style'] instanceof CSSStyleDeclaration) {
             DOM.setStyles(element, styles);
           }
+        }
+      }
+
+      renderDynamicText (source: ValueSource<Primitive>) {
+        const disposable = DOM.appendDynamicText(this.domInsertionLocation, source);
+        return this._returnDisposableForDynamicRendered(disposable);
+      }
+      renderDynamicNodeRange (source: ArraySource<DOMNodeRange>) {
+        const disposable = DOM.appendDynamicNodeRange(this.domInsertionLocation, source);
+        return this._returnDisposableForDynamicRendered(disposable);
+      }
+      renderDynamicMarkdown (source: StringSource, options?: DynamicMarkdownOptions) {
+        const disposable = DOM.appendDynamicMarkdown(this.domInsertionLocation, source);
+        return this._returnDisposableForDynamicRendered(disposable);
+      }
+
+      renderDynamicTextInto (selector: string, source: ValueSource<Primitive>) {
+        const location = DOMLocationPointer.from(this.domActiveRange.querySelectorRequired(selector));
+        const disposable = DOM.appendDynamicText(location, source);
+        return this._returnDisposableForDynamicRendered(disposable);
+      }
+      renderDynamicNodeRangeInto (selector: string, source: ArraySource<DOMNodeRange>) {
+        const location = DOMLocationPointer.from(this.domActiveRange.querySelectorRequired(selector));
+        const disposable = DOM.appendDynamicNodeRange(location, source);
+        return this._returnDisposableForDynamicRendered(disposable);
+      }
+      renderDynamicMarkdownInto (selector: string, source: StringSource, options?: DynamicMarkdownOptions) {
+        const location = DOMLocationPointer.from(this.domActiveRange.querySelectorRequired(selector));
+        const disposable = DOM.appendDynamicMarkdown(location, source, options);
+        return this._returnDisposableForDynamicRendered(disposable);
+      }
+
+      renderDynamicTextToTemplateId (id: string, source: ValueSource<Primitive>) {
+        const location = this.bindDOMTemplateSlotById(id).domInsertionLocation;
+        const disposable = DOM.appendDynamicText(location, source);
+        return this._returnDisposableForDynamicRendered(disposable);
+      }
+      renderDynamicNodeRangeToTemplateId (id: string, source: ArraySource<DOMNodeRange>) {
+        const location = this.bindDOMTemplateSlotById(id).domInsertionLocation;
+        const disposable = DOM.appendDynamicNodeRange(location, source);
+        return this._returnDisposableForDynamicRendered(disposable);
+      }
+      renderDynamicMarkdownToTemplateId (id: string, source: StringSource, options?: DynamicMarkdownOptions) {
+        const location = this.bindDOMTemplateSlotById(id).domInsertionLocation;
+        const disposable = DOM.appendDynamicMarkdown(location, source, options);
+        return this._returnDisposableForDynamicRendered(disposable);
+      }
+
+      private _returnDisposableForDynamicRendered (disposable: Disposable) {
+        this.disposables.add(disposable);
+        return disposableFunction(() => {
+          this.disposables.delete(disposable);
+          dispose(disposable);
+        });
+      }
+
+      observeConnectionToDOM (callback: (isConnected: boolean) => void): void;
+      observeConnectionToDOM (abortSignal: AbortSignal, callback: (isConnected: boolean) => void): void;
+      observeConnectionToDOM (abortSignalOrCallback: AbortSignal | ((isConnected: boolean) => void), callback?: (isConnected: boolean) => void): void {
+        if (isDefined(callback)) {
+          DOM.isConnected.observe(abortSignalOrCallback as AbortSignal, this.domActiveRange.firstActiveElementRequired, callback);
+        }
+        else {
+          DOM.isConnected.observe(this.abort.signal, this.domActiveRange.firstActiveElementRequired, abortSignalOrCallback as (isConnected: boolean) => void);
         }
       }
     }

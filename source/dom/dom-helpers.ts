@@ -97,6 +97,7 @@ export namespace DOM {
       }
       localStorage.setItem('color-scheme', colorSchemeToSet);
       style.setProperty('--color-scheme', colorSchemeToSet);
+      setDataAttribute(colorSchemeToSet);
       return colorSchemeToSet;
     }
     export function loadColorSchemeOverride (): void {
@@ -104,12 +105,16 @@ export namespace DOM {
       if (savedScheme) {
         document.documentElement.style.setProperty('--color-scheme', savedScheme);
       }
+      setDataAttribute(savedScheme);
     }
     export function getActiveColorSchemeOverride (): 'light' | 'dark' | null {
       return localStorage.getItem('color-scheme') as 'light' | 'dark' | null;
     }
     export function getSystemColorScheme (): 'light' | 'dark' {
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    function setDataAttribute (colorScheme: 'light' | 'dark' | null | undefined) {
+      document.documentElement.dataset.colorScheme = colorScheme ?? getSystemColorScheme();
     }
   }
 
