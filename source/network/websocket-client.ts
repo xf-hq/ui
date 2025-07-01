@@ -81,6 +81,7 @@ export class WebSocketClient {
     });
     ws.addEventListener('close', () => {
       console.warn(`The connection to the server was closed. Attempting to reconnect...`);
+      self.#listener.disconnectedFromServer?.();
       this.#scheduleReconnect(wait);
     });
     ws.addEventListener('error', () => {

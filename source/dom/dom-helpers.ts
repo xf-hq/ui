@@ -6,6 +6,9 @@ import * as _Layout from './dom-layout-helpers.internal';
 import * as DynamicMarkdown from './dynamic-markdown';
 import * as DynamicNodes from './dynamic-nodes';
 import * as DynamicText from './dynamic-text';
+import { Attributes as _Attributes } from './element-attributes';
+import { Styles as _Styles } from './element-styles';
+import { Properties as _Properties } from './element-properties';
 import { HTMLTemplate } from './html-template';
 import { ManagedStylesheet } from './managed-stylesheet';
 
@@ -118,6 +121,10 @@ export namespace DOM {
     }
   }
 
+  export function isStylableElement (element: Element): element is Element & ElementCSSInlineStyle {
+    return element['style'] instanceof CSSStyleDeclaration;
+  }
+
   export function setStyles (element: Element, styles: Record<string, any>): void;
   export function setStyles (element: HTMLElement, styles: Record<string, any>): void {
     const style = element.style;
@@ -128,6 +135,9 @@ export namespace DOM {
   }
 
   export import Layout = _Layout;
+  export import Attributes = _Attributes;
+  export import Styles = _Styles;
+  export import Properties = _Properties;
   export const appendDynamicText = DynamicText.appendDynamicText;
   export const appendDynamicNodeRange = DynamicNodes.appendDynamicDOMNodeRange;
   export const appendDynamicMarkdown = DynamicMarkdown.appendDynamicMarkdown;

@@ -1,4 +1,4 @@
-import type { ArraySource, StringSource, ValueSource } from '@xf-common/dynamic';
+import type { ArraySource, AssociativeRecordData, BasicPrimitiveData, BooleanData, MapData, NumberData, NumberSource, StringData, StringSource, ValueSource } from '@xf-common/dynamic';
 import type { Compositional } from '@xf-common/facilities/compositional/compositional';
 import { Context } from '@xf-common/facilities/context';
 import { isArray, isDefined, isString } from '@xf-common/general/type-checking';
@@ -38,6 +38,7 @@ export namespace DOMContext {
       get domActiveRange () { return this[_domActiveRange_] ??= this.query(DOMContextQueryTypes.ActiveDOMRange); }
       get domInsertionLocation () { return this[_insertionLocation_] ??= this.unbind(DOMContextBindings.DOM.InsertionLocation); }
       get stylesheet () { return this[_stylesheet_] ??= this.unbind(DOMContextBindings.StyleSheet.Driver); }
+      get classList () { return this.domActiveRange.firstActiveElementRequired.classList; }
       protected get detachedByDefault () { return this[_detachedByDefault_] ??= this.unbind(DOMContextBindings.DOM.DetachedByDefault); }
 
       bindStyleSheet (stylesheet: ManagedStylesheet): this {
@@ -51,9 +52,14 @@ export namespace DOMContext {
 
       bindDOMLocation (location: Element | DOMNodeRange | DOMLocationPointer | DOMLocationPointer.Props | string): this {
         if (isString(location)) location = this.domActiveRange.querySelectorRequired(location);
-        return bindDOMInsertionLocation(this, location);
+        return bindDOMLocationPointer(this, location);
       }
 
+      /**
+       * @remarks
+       * If a string is passed, it is interpreted as a CSS selector and will be passed to `querySelectorRequired` on the
+       * active DOM node range for this context.
+       */
       bindDOM (dom: Element | DOMNodeRange | DOMView | string): this {
         if (isString(dom)) dom = this.domActiveRange.querySelectorRequired(dom);
         else if (isDOMView(dom)) dom = dom.dom;
@@ -232,12 +238,34 @@ export namespace DOMContext {
         return new DOMView.ContextBound(context);
       }
 
-      setStyles (styles: Record<string, any>): void {
-        for (const element of this.domActiveRange.elements()) {
-          if (element['style'] instanceof CSSStyleDeclaration) {
-            DOM.setStyles(element, styles);
-          }
-        }
+      setAttribute (name: string, value: BasicPrimitiveData) {
+        DOM.Attributes.set(this, name, value);
+      }
+      setAttributes (attributes: Record<string, BasicPrimitiveData> | MapData<string, BasicPrimitiveData> | AssociativeRecordData<BasicPrimitiveData>) {
+        DOM.Attributes.set(this, attributes);
+      }
+      removeAttribute (name: string) {
+        DOM.Attributes.remove(this, name);
+      }
+
+      setStyle (name: string, value: BasicPrimitiveData): void {
+        DOM.Styles.set(this, name, value);
+      }
+      setStyles (styles: Record<string, BasicPrimitiveData> | MapData<string, BasicPrimitiveData> | AssociativeRecordData<BasicPrimitiveData>): void {
+        DOM.Styles.set(this, styles);
+      }
+      removeStyle (name: string): void {
+        DOM.Styles.remove(this, name);
+      }
+
+      setProperty (name: string, value: BasicPrimitiveData) {
+        DOM.Properties.set(this, name, value);
+      }
+      setProperties (properties: Record<string, BasicPrimitiveData> | MapData<string, BasicPrimitiveData> | AssociativeRecordData<BasicPrimitiveData>) {
+        DOM.Properties.set(this, properties);
+      }
+      removeProperty (name: string) {
+        DOM.Properties.unset(this, name);
       }
 
       renderDynamicText (source: ValueSource<Primitive>) {
@@ -249,7 +277,7 @@ export namespace DOMContext {
         return this._returnDisposableForDynamicRendered(disposable);
       }
       renderDynamicMarkdown (source: StringSource, options?: DynamicMarkdownOptions) {
-        const disposable = DOM.appendDynamicMarkdown(this.domInsertionLocation, source);
+        const disposable = DOM.appendDynamicMarkdown(this.domInsertionLocation, source, options);
         return this._returnDisposableForDynamicRendered(disposable);
       }
 
@@ -321,8 +349,8 @@ export namespace DOMContext {
       .bind(DOMContextBindings.DOM.InsertionLocation, DOMLocationPointer.from(document.body));
   }
 
-  export function bindDOMInsertionLocation<TContext extends Context.Immediate> (context: TContext, location: Element | DOMNodeRange | DOMLocationPointer | DOMLocationPointer.Props): TContext;
-  export function bindDOMInsertionLocation<TContext extends Context.Immediate> (context: TContext, locationArg: Element | DOMNodeRange | DOMLocationPointer | DOMLocationPointer.Props): TContext {
+  export function bindDOMLocationPointer<TContext extends Context.Immediate> (context: TContext, location: Element | DOMNodeRange | DOMLocationPointer | DOMLocationPointer.Props): TContext;
+  export function bindDOMLocationPointer<TContext extends Context.Immediate> (context: TContext, locationArg: Element | DOMNodeRange | DOMLocationPointer | DOMLocationPointer.Props): TContext {
     let location: DOMLocationPointer;
     if (isDOMLocationPointer(locationArg)) location = locationArg;
     else if (isDOMNodeRange(locationArg)) location = DOMLocationPointer.from(locationArg.firstActiveElementRequired);
