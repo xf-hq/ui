@@ -9,7 +9,7 @@ export const isDOMView = (a: unknown): a is DOMView => a?.[_isDOMView_] === true
 
 export interface DOMView extends Disposable {
   readonly [_isDOMView_]: true;
-  readonly dom: DOMNodeRange;
+  readonly nodes: DOMNodeRange;
   attachDisposable (disposalTarget: LooseDisposable): void;
   removeFromDOM (): void;
   removeFromDOMAndDispose (): void;
@@ -26,7 +26,7 @@ export namespace DOMView {
     protected get disposables (): DisposableGroup { return this.#disposables ??= new DisposableGroup(); }
 
     get [_isDOMView_] () { return true as const; }
-    abstract get dom (): DOMNodeRange;
+    abstract get nodes (): DOMNodeRange;
 
     attachDisposable (disposalTarget: LooseDisposable): this {
       if (this.#disposed) {
@@ -39,12 +39,12 @@ export namespace DOMView {
 
     removeFromDOM (): void {
       if (this.#disposed) return;
-      this.dom.remove();
+      this.nodes.remove();
     }
 
     removeFromDOMAndDispose (): void {
       if (this.#disposed) return;
-      this.dom.remove();
+      this.nodes.remove();
       dispose(this);
     }
 
@@ -52,7 +52,7 @@ export namespace DOMView {
       if (this.#disposed) return;
       this.#disposed = true;
       if (isDefined(this.#disposables)) dispose(this.#disposables);
-      dispose(this.dom);
+      dispose(this.nodes);
       this.onDispose();
     }
 
@@ -61,7 +61,7 @@ export namespace DOMView {
   }
 
   class GenericDOMView extends Base {
-    constructor (public readonly dom: DOMNodeRange) { super(); }
+    constructor (public readonly nodes: DOMNodeRange) { super(); }
   }
   namespace GenericDOMView {}
   export import Generic = GenericDOMView;
@@ -73,7 +73,7 @@ export namespace DOMView {
     }
     readonly #context: TContext;
 
-    override get dom (): DOMNodeRange { return this.context.domActiveRange; }
+    override get nodes (): DOMNodeRange { return this.context.domActiveRange; }
     protected get context (): TContext { return this.#context; }
   }
   namespace ContextBoundDOMView {
@@ -113,7 +113,7 @@ export namespace DOMView {
         view.attachDisposable(disposalTarget);
         return view;
       }
-      get textNode (): Text { return this.dom.firstActiveNode as Text; }
+      get textNode (): Text { return this.nodes.firstActiveNode as Text; }
       setText (text: string): void { this.textNode.nodeValue = text; }
     }
   );
@@ -129,21 +129,21 @@ export namespace DOMView {
         view.attachDisposable(disposalTarget);
         return view;
       }
-      get node (): TNode { return this.dom.firstActiveNode as TNode; }
+      get node (): TNode { return this.nodes.firstActiveNode as TNode; }
     }
   );
 
   export interface WithNamedNodes<TNodes extends Record<string, Node>> extends GenericDOMView {
-    readonly nodes: TNodes;
+    readonly namedNodes: TNodes;
   }
   export const WithNamedNodes = FnCC(
     class DOMViewWithNamedNodes<TNodes extends Record<string, Node>> extends GenericDOMView implements WithNamedNodes<TNodes> {
-      static create<TNodes extends Record<string, Node>> (dom: DOMNodeRange, nodes: TNodes, disposalTarget?: LooseDisposable): WithNamedNodes<TNodes> {
-        const view = new DOMViewWithNamedNodes(dom, nodes);
+      static create<TNodes extends Record<string, Node>> (dom: DOMNodeRange, namedNodes: TNodes, disposalTarget?: LooseDisposable): WithNamedNodes<TNodes> {
+        const view = new DOMViewWithNamedNodes(dom, namedNodes);
         view.attachDisposable(disposalTarget);
         return view;
       }
-      constructor (dom: DOMNodeRange, public readonly nodes: TNodes) { super(dom); }
+      constructor (dom: DOMNodeRange, public readonly namedNodes: TNodes) { super(dom); }
     }
   );
 
@@ -160,7 +160,7 @@ export namespace DOMView {
       constructor (public readonly branches: TView[]) { super(); }
       #dom?: DOMNodeRange;
 
-      get dom () { return this.#dom ??= DOMNodeRange.ConcatAll(this.branches.map((branch) => branch.dom)); }
+      get nodes () { return this.#dom ??= DOMNodeRange.ConcatAll(this.branches.map((branch) => branch.nodes)); }
 
       protected override onDispose () {
         disposeArray(this.branches);
@@ -181,11 +181,11 @@ export namespace DOMView {
       constructor (public readonly branches: TBranches) { super(); }
       #dom?: DOMNodeRange;
 
-      get dom () {
+      get nodes () {
         if (isDefined(this.#dom)) return this.#dom;
         const ranges: DOMNodeRange[] = [];
         for (const key in this.branches) {
-          ranges.push(this.branches[key].dom);
+          ranges.push(this.branches[key].nodes);
         }
         return this.#dom = DOMNodeRange.ConcatAll(ranges);
       }

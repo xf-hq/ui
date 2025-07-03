@@ -62,7 +62,7 @@ export namespace DOMContext {
        */
       bindDOM (dom: Element | DOMNodeRange | DOMView | string): this {
         if (isString(dom)) dom = this.domActiveRange.querySelectorRequired(dom);
-        else if (isDOMView(dom)) dom = dom.dom;
+        else if (isDOMView(dom)) dom = dom.nodes;
         return this.bindDOMRange(dom).bindDOMLocation(dom);
       }
 
@@ -105,7 +105,7 @@ export namespace DOMContext {
       render<TContext extends DOMContext, TArgs extends unknown[], TView extends DOMView> (this: TContext, target: DOMComponent.OrNS<TContext, TArgs, TView>, ...args: TArgs) {
         const view = this._render(target, args);
         if (!this.detachedByDefault) {
-          view.dom.attachTo(this.domInsertionLocation);
+          view.nodes.attachTo(this.domInsertionLocation);
         }
         return view;
       }
@@ -186,7 +186,7 @@ export namespace DOMContext {
               .render(branch, ...args);
             views.push(view);
             if (i > 0) {
-              tailingRange = DOMNodeRange.ConcatAll([view.dom, tailingRange]);
+              tailingRange = DOMNodeRange.ConcatAll([view.nodes, tailingRange]);
               branchContext = branchRootContext.bindDOMLocation({
                 parentElement: this.domInsertionLocation.parentElement,
                 nextOuterSibling: () => tailingRange.firstActiveNode,
@@ -210,7 +210,7 @@ export namespace DOMContext {
               .render(branch, ...args);
             views[name] = view;
             if (i > 0) {
-              tailingRange = DOMNodeRange.ConcatAll([view.dom, tailingRange]);
+              tailingRange = DOMNodeRange.ConcatAll([view.nodes, tailingRange]);
               branchContext = branchRootContext.bindDOMLocation({
                 parentElement: this.domInsertionLocation.parentElement,
                 nextOuterSibling: () => tailingRange.firstActiveNode,

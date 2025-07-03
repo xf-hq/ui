@@ -1,5 +1,5 @@
 import type { Context } from '@xf-common/facilities/context';
-import { isDefined, isFunction, isString, isUndefined } from '@xf-common/general/type-checking';
+import { isArray, isDefined, isFunction, isString, isUndefined } from '@xf-common/general/type-checking';
 import { type DOMContext } from './dom-context';
 import { DOM } from './dom-helpers';
 import { DOMView } from './dom-view';
@@ -65,12 +65,12 @@ export function isDOMComponent (target: unknown): target is DOMComponent {
  * ```ts
  * const view = context.render(ColoredTextComponent, 'Hello, world!', 'red');
  * // Manually attach the view to the DOM:
- * for (const node of view.dom) {
+ * for (const node of view.nodes) {
  *   parentElement.appendChild(node);
  * }
  *
  * // Or use the `attachTo` method:
- * view.dom.attachTo(parentElement); // Note: We can alternatively pass it a `DOMLocationPointer` object as needed.
+ * view.nodes.attachTo(parentElement); // Note: We can alternatively pass it a `DOMLocationPointer` object as needed.
  * ```
  *
  * ## Custom views
@@ -79,9 +79,9 @@ export function isDOMComponent (target: unknown): target is DOMComponent {
  * import { DOMComponent, DOMContext, DOMNodeRange, DOMView } from '@sx/ui/dom';
  *
  * class ColoredTextView extends DOMView.Generic {
- *   constructor (public readonly dom: DOMNodeRange) {}
+ *   constructor (public readonly nodes: DOMNodeRange) {}
  *   setText (text: string) {
- *     this.dom.firstActiveHTMLElementRequired.textContent = text;
+ *     this.nodes.firstActiveHTMLElementRequired.textContent = text;
  *   }
  * }
  * const ColoredTextComponent: DOMComponent<DOMContext, [text: string, color: string], ColoredTextView> = {
@@ -303,7 +303,7 @@ export namespace DOMComponent {
     ;
     export namespace Config {
       export interface Minimal {
-        readonly css?: ManagedStylesheet.OnDemandRuleSet | string;
+        readonly css?: ManagedStylesheet.OnDemandRuleSet | string | string[];
         readonly html: HTMLTemplate | string;
       }
       export interface Standard<
@@ -406,7 +406,7 @@ export namespace DOMComponent {
       get styles (): ManagedStylesheet.OnDemandRuleSet | null {
         if (this.#styles) return this.#styles;
         if (isUndefined(this.#config.css)) return this.#styles = null;
-        if (isString(this.#config.css)) return this.#styles ??= DOM.css(this.#config.css);
+        if (isString(this.#config.css) || isArray(this.#config.css)) return this.#styles ??= DOM.css(this.#config.css);
         return this.#styles = this.#config.css as ManagedStylesheet.OnDemandRuleSet;
       }
       get template (): HTMLTemplate {

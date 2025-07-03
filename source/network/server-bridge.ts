@@ -81,7 +81,11 @@ export class ServerBridge {
       request.callback(context);
     }
     else {
-      const channel = !response.persistent ? null : new ServerBridge.PersistentChannel(this, this.#activeChannels, ref, request.abortSignal);
+      if (!response.persistent) {
+        log.error(`Persistent request yielded a non-persistent response. This is unexpected. The callback will not be invoked.`);
+        return;
+      }
+      const channel = new ServerBridge.PersistentChannel(this, this.#activeChannels, ref, request.abortSignal);
       request.callback(context, channel);
     }
   }
@@ -97,7 +101,7 @@ export class ServerBridge {
 export namespace ServerBridge {
   export type OnResponse = (context: Messaging.InboundMessageContext) => void;
   export interface OnOpenChannelResponse {
-    (context: Messaging.InboundMessageContext, channel: PersistentChannel | null): void;
+    (context: Messaging.InboundMessageContext, channel: PersistentChannel): void;
   }
 
   export class PersistentChannel {
@@ -126,7 +130,7 @@ export namespace ServerBridge {
         this._server.send(Messaging.Message.Update(this._ref, Messaging.Message(arg0, messageData)));
       }
       else {
-        this._server.send(arg0);
+        this._server.send(Messaging.Message.Update(this._ref, arg0));
       }
     }
 

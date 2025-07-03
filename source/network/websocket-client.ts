@@ -90,7 +90,10 @@ export class WebSocketClient {
     });
   }
 
+  #reconnectScheduled = false;
   #scheduleReconnect (wait: number): void {
+    if (this.#reconnectScheduled) return;
+    this.#reconnectScheduled = true;
     setTimeout(() => this.#connect(Math.min(wait * 1.25, WebSocketClient.maxWait)), wait);
   }
 
