@@ -1,4 +1,4 @@
-import type { ArraySource, AssociativeRecordData, BasicPrimitiveData, BooleanData, MapData, NumberData, NumberSource, StringData, StringSource, ValueSource } from '@xf-common/dynamic';
+import { Future, Monitor, type ArraySource, type AssociativeRecordData, type BasicPrimitiveData, type BooleanData, type MapData, type NumberData, type NumberSource, type StringData, type StringSource, type ValueSource } from '@xf-common/dynamic';
 import type { Compositional } from '@xf-common/facilities/compositional/compositional';
 import { Context } from '@xf-common/facilities/context';
 import { isArray, isDefined, isString } from '@xf-common/general/type-checking';
@@ -221,51 +221,20 @@ export namespace DOMContext {
         }
       }
 
-      extractById<TElement extends Element> (id: string, as?: new (...args: any) => TElement): TElement {
-        return isDefined(as)
-          ? HTMLTemplate.extractById(id, as, this.domActiveRange)
-          : HTMLTemplate.extractById(id, this.domActiveRange);
+      renderFutureText (source: Future<[Primitive]>) {
+        const read = (value: Primitive) => this.renderText(value);
+        if (!source.waiting) return Future.read(source, read);
+        Monitor.attach(source, () => Future.read(source, read), source);
       }
-      extractByIdAsLocation (id: string): DOMLocationPointer {
-        return HTMLTemplate.extractByIdAsLocation(id, this.domActiveRange);
+      renderFutureTextInto (selector: string, source: Future<[Primitive]>) {
+        const read = (value: Primitive) => this.renderTextInto(selector, value);
+        if (!source.waiting) return Future.read(source, read);
+        Monitor.attach(source, () => Future.read(source, read), source);
       }
-      extractByIdAsNodeRange (id: string): DOMNodeRange {
-        return HTMLTemplate.extractByIdAsNodeRange(id, this.domActiveRange);
-      }
-
-      createDOMView (dom: DOMNodeRange | ChildNode | 'expose-prebound-dom' = 'expose-prebound-dom'): DOMView.ContextBound {
-        const context = dom === 'expose-prebound-dom' ? this : this.bindDOMRange(dom);
-        return new DOMView.ContextBound(context);
-      }
-
-      setAttribute (name: string, value: BasicPrimitiveData) {
-        DOM.Attributes.set(this, name, value);
-      }
-      setAttributes (attributes: Record<string, BasicPrimitiveData> | MapData<string, BasicPrimitiveData> | AssociativeRecordData<BasicPrimitiveData>) {
-        DOM.Attributes.set(this, attributes);
-      }
-      removeAttribute (name: string) {
-        DOM.Attributes.remove(this, name);
-      }
-
-      setStyle (name: string, value: BasicPrimitiveData): void {
-        DOM.Styles.set(this, name, value);
-      }
-      setStyles (styles: Record<string, BasicPrimitiveData> | MapData<string, BasicPrimitiveData> | AssociativeRecordData<BasicPrimitiveData>): void {
-        DOM.Styles.set(this, styles);
-      }
-      removeStyle (name: string): void {
-        DOM.Styles.remove(this, name);
-      }
-
-      setProperty (name: string, value: BasicPrimitiveData) {
-        DOM.Properties.set(this, name, value);
-      }
-      setProperties (properties: Record<string, BasicPrimitiveData> | MapData<string, BasicPrimitiveData> | AssociativeRecordData<BasicPrimitiveData>) {
-        DOM.Properties.set(this, properties);
-      }
-      removeProperty (name: string) {
-        DOM.Properties.unset(this, name);
+      renderFutureTextToTemplateId (id: string, source: Future<[Primitive]>) {
+        const read = (value: Primitive) => this.renderTextToTemplateId(id, value);
+        if (!source.waiting) return Future.read(source, read);
+        Monitor.attach(source, () => Future.read(source, read), source);
       }
 
       renderDynamicText (source: ValueSource<Primitive>) {
@@ -311,6 +280,53 @@ export namespace DOMContext {
         const location = this.bindDOMTemplateSlotById(id).domInsertionLocation;
         const disposable = DOM.appendDynamicMarkdown(location, source, options);
         return this._returnDisposableForDynamicRendered(disposable);
+      }
+
+      extractById<TElement extends Element> (id: string, as?: new (...args: any) => TElement): TElement {
+        return isDefined(as)
+          ? HTMLTemplate.extractById(id, as, this.domActiveRange)
+          : HTMLTemplate.extractById(id, this.domActiveRange);
+      }
+      extractByIdAsLocation (id: string): DOMLocationPointer {
+        return HTMLTemplate.extractByIdAsLocation(id, this.domActiveRange);
+      }
+      extractByIdAsNodeRange (id: string): DOMNodeRange {
+        return HTMLTemplate.extractByIdAsNodeRange(id, this.domActiveRange);
+      }
+
+      createDOMView (dom: DOMNodeRange | ChildNode | 'expose-prebound-dom' = 'expose-prebound-dom'): DOMView.ContextBound {
+        const context = dom === 'expose-prebound-dom' ? this : this.bindDOMRange(dom);
+        return new DOMView.ContextBound(context);
+      }
+
+      setAttribute (name: string, value: BasicPrimitiveData) {
+        DOM.Attributes.set(this, name, value);
+      }
+      setAttributes (attributes: Record<string, BasicPrimitiveData> | MapData<string, BasicPrimitiveData> | AssociativeRecordData<BasicPrimitiveData>) {
+        DOM.Attributes.set(this, attributes);
+      }
+      removeAttribute (name: string) {
+        DOM.Attributes.remove(this, name);
+      }
+
+      setStyle (name: string, value: BasicPrimitiveData): void {
+        DOM.Styles.set(this, name, value);
+      }
+      setStyles (styles: Record<string, BasicPrimitiveData> | MapData<string, BasicPrimitiveData> | AssociativeRecordData<BasicPrimitiveData>): void {
+        DOM.Styles.set(this, styles);
+      }
+      removeStyle (name: string): void {
+        DOM.Styles.remove(this, name);
+      }
+
+      setProperty (name: string, value: BasicPrimitiveData) {
+        DOM.Properties.set(this, name, value);
+      }
+      setProperties (properties: Record<string, BasicPrimitiveData> | MapData<string, BasicPrimitiveData> | AssociativeRecordData<BasicPrimitiveData>) {
+        DOM.Properties.set(this, properties);
+      }
+      removeProperty (name: string) {
+        DOM.Properties.unset(this, name);
       }
 
       private _returnDisposableForDynamicRendered (disposable: Disposable) {

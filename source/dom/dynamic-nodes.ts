@@ -104,7 +104,7 @@ class DynamicDOMController implements Subscribable.Receiver<[event: ArraySource.
     const newSegment = this.createAndAttachSegment(range, previous, next);
     this.#segments[index] = newSegment;
   }
-  batch (events: ArraySource.Event<DOMNodeRange>[]) {
+  batch (events: readonly ArraySource.Event<DOMNodeRange>[]) {
     for (let i = 0; i < events.length; ++i) {
       this.event(events[i]);
     }
