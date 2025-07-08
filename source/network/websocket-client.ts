@@ -1,3 +1,4 @@
+import type { ConsoleLogger } from '@xf-common/facilities/logging';
 import { isString, isUndefined } from '@xf-common/general/type-checking';
 import type { Messaging } from '@xf-common/network/messaging';
 
@@ -6,18 +7,16 @@ export class WebSocketClient {
    * @param wssurl e.g. `wss://${window.location.host}${window.location.pathname}`
    * @param listener Will receive all messages from the server.
    */
-  static initialize (wssurl: string, listener: WebSocketClient.Listener): WebSocketClient {
-    const client = new WebSocketClient(wssurl, listener);
+  static initialize (config: WebSocketClient.Config): WebSocketClient {
+    const client = new WebSocketClient(config);
     client.#connect();
     return client;
   }
 
-  constructor (wssurl: string/* , ws: WebSocket */, listener: WebSocketClient.Listener) {
-    this.#wssurl = wssurl;
-    this.#listener = listener;
+  constructor (config: WebSocketClient.Config) {
+    this.#config = config;
   }
-  readonly #wssurl: string;
-  readonly #listener: WebSocketClient.Listener;
+  readonly #config: WebSocketClient.Config;
 
   #buffer: Messaging.Message[] | undefined;
   #ws: WebSocket;
@@ -54,38 +53,39 @@ export class WebSocketClient {
 
   #receive (event: MessageEvent) {
     const message: Messaging.Message = JSON.parse(event.data);
-    this.#listener.receiveMessage(message);
+    this.#config.listener.receiveMessage(message);
   }
 
   #connect (wait = 1000) {
+    const config = this.#config;
+    const { log } = config;
     this.#buffer = [];
     this.#ready = Promise.withResolvers();
-    const wssurl = this.#wssurl;
-    console.debug(`Attempting to connect to WebSocket server at ${wssurl}...`);
-    const ws = new WebSocket(wssurl);
+    log.working(`Attempting to connect to WebSocket server at ${config.wssurl}...`);
+    const ws = new WebSocket(config.wssurl);
     ws.addEventListener('open', () => {
-      console.debug(`WebSocket connection established.`);
+      log.info(`WebSocket connection established.`);
     });
     const self = this;
     ws.addEventListener('message', function initialListener (event: MessageEvent) {
       const message: Messaging.Message = JSON.parse(event.data);
       if (message.type === 'ready') {
-        console.info(`Connected to the server.`);
+        log.good(`Server handshake complete. Default message channel is now active.`);
         ws.removeEventListener('message', initialListener);
         self.#ws = ws;
         ws.addEventListener('message', (event: MessageEvent) => self.#receive(event));
         self.#flush();
         self.#ready.resolve();
-        self.#listener.connectedToServer?.();
+        config.listener.connectedToServer?.();
       }
     });
     ws.addEventListener('close', () => {
-      console.warn(`The connection to the server was closed. Attempting to reconnect...`);
-      self.#listener.disconnectedFromServer?.();
+      log.problem(`The connection to the server was closed. Attempting to reconnect...`);
+      config.listener.disconnectedFromServer?.();
       this.#scheduleReconnect(wait);
     });
     ws.addEventListener('error', () => {
-      console.error(`Failed to connect to the server. Retrying in ${wait}ms.`);
+      log.critical(`Failed to connect to the server. Retrying in ${wait}ms.`);
       this.#scheduleReconnect(wait);
     });
   }
@@ -94,12 +94,26 @@ export class WebSocketClient {
   #scheduleReconnect (wait: number): void {
     if (this.#reconnectScheduled) return;
     this.#reconnectScheduled = true;
-    setTimeout(() => this.#connect(Math.min(wait * 1.25, WebSocketClient.maxWait)), wait);
+    setTimeout(() => {
+      this.#reconnectScheduled = false;
+      this.#connect(Math.min(wait * 1.25, WebSocketClient.maxWait));
+    }, wait);
   }
 
   static maxWait = 10000;
 }
 export namespace WebSocketClient {
+  export interface Config {
+    /**
+     * e.g. `wss://${window.location.host}${window.location.pathname}`
+     */
+    readonly wssurl: string;
+    /**
+     * Will receive all messages from the server.
+     */
+    readonly listener: WebSocketClient.Listener;
+    readonly log: ConsoleLogger;
+  }
   export interface Listener {
     receiveMessage (message: Messaging.Message): void;
     disconnectedFromServer? (): void;
