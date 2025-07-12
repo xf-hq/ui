@@ -270,12 +270,12 @@ export class DOMNodeRange implements Disposable, Iterable<ChildNode> {
   }
 
   /**
-   * Returns a generator that yields all nodes in the range.
+   * Yields all nodes in the range.
    * @returns A generator that yields all nodes in the range.
    */
   nodes (): Generator<ChildNode>;
   /**
-   * Returns a generator that yields all nodes in the range, filtered to include only those nodes that are instances of
+   * Yields all nodes in the range, filtered to include only those nodes that are instances of
    * the specified `ChildNode` constructor.
    * @template TNode The subtype of `ChildNode` to yield from the range.
    * @param CNode The constructor to use when testing if a node is an instance of `TNode`.
@@ -290,12 +290,12 @@ export class DOMNodeRange implements Disposable, Iterable<ChildNode> {
   }
 
   /**
-   * Returns a generator that yields all nodes in the range that are instances of {@link Element `Element`}.
+   * Yields all nodes in the range that are instances of {@link Element `Element`}.
    * @returns A generator that yields all elements in the range.
    */
   elements (): Generator<Element>;
   /**
-   * Returns a generator that yields all nodes in the range that are instances of `TElement`.
+   * Yields all nodes in the range that are instances of `TElement`.
    * @template TElement The subtype of `Element` to yield from the range.
    * @param CElement The constructor to use when testing if a node is an instance of `TElement`.
    * @returns A generator yielding any elements in the range that are instances of the `TElement` constructor.
@@ -306,13 +306,13 @@ export class DOMNodeRange implements Disposable, Iterable<ChildNode> {
   }
 
   /**
-   * Returns a generator that yields all elements in the range that can have inline styles, i.e. those whose interface
+   * Yields all elements in the range that can have inline styles, i.e. those whose interface
    * extends `ElementCSSInlineStyle`.
    * @returns A generator that yields all elements in the range that can have inline styles.
    */
   styleableElements (): Generator<Element & ElementCSSInlineStyle>;
   /**
-   * Returns a generator that yields all nodes in the range that are instances of `TElement` and can have inline styles.
+   * Yields all nodes in the range that are instances of `TElement` and can have inline styles.
    * @template TElement The subtype of `Element & ElementCSSInlineStyle` to yield from the range.
    * @param CElement The constructor to use when testing if a node is an instance of `TElement`.
    * @returns A generator yielding any elements in the range that are instances of `TElement` and can have inline styles.
@@ -327,12 +327,12 @@ export class DOMNodeRange implements Disposable, Iterable<ChildNode> {
   }
 
   /**
-   * Returns a generator that yields all nodes in the range that are instances of {@link HTMLElement `HTMLElement`}.
+   * Yields all nodes in the range that are instances of {@link HTMLElement `HTMLElement`}.
    * @returns A generator that yields all HTML elements in the range.
    */
   htmlElements (): Generator<HTMLElement>;
   /**
-   * Returns a generator that yields all nodes in the range that are instances of `TElement`.
+   * Yields all nodes in the range that are instances of `TElement`.
    * @template TElement The subtype of `HTMLElement` to yield from the range.
    * @param CElement The constructor to use when testing if a node is an instance of `TElement`.
    * @returns A generator yielding any HTML elements in the range that are instances of `TElement`.
@@ -343,12 +343,12 @@ export class DOMNodeRange implements Disposable, Iterable<ChildNode> {
   }
 
   /**
-   * Returns a generator that yields all nodes in the range that are instances of {@link SVGElement `SVGElement`}.
+   * Yields all nodes in the range that are instances of {@link SVGElement `SVGElement`}.
    * @returns A generator that yields all SVG elements in the range.
    */
   svgElements (): Generator<SVGElement>;
   /**
-   * Returns a generator that yields all nodes in the range that are instances of `TElement`.
+   * Yields all nodes in the range that are instances of `TElement`.
    * @template TElement The subtype of `SVGElement` to yield from the range.
    * @param CElement The constructor to use when testing if a node is an instance of `TElement`.
    * @returns A generator yielding any SVG elements in the range that are instances of `TElement`.
@@ -356,6 +356,19 @@ export class DOMNodeRange implements Disposable, Iterable<ChildNode> {
   svgElements<TElement extends SVGElement = SVGElement> (CElement?: abstract new (...args: any) => TElement): Generator<TElement>;
   *svgElements<TElement extends SVGElement = SVGElement> (CElement?: abstract new (...args: any) => TElement) {
     yield* this.nodes(CElement ?? SVGElement) as Generator<TElement>;
+  }
+
+  /**
+   * Yields all nodes in the range that are instances of either {@link HTMLElement `HTMLElement`} or
+   * {@link SVGElement `SVGElement`}.
+   * @returns A generator that yields all HTML and SVG elements in the range.
+   */
+  *htmlOrSvgElements (): Generator<HTMLElement | SVGElement> {
+    for (const element of this.elements()) {
+      if (element instanceof HTMLElement || element instanceof SVGElement) {
+        yield element;
+      }
+    }
   }
 
   /**

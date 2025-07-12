@@ -9,6 +9,7 @@ import * as DynamicText from './dynamic-text';
 import { Attributes as _Attributes } from './element-attributes';
 import { Styles as _Styles } from './element-styles';
 import { Properties as _Properties } from './element-properties';
+import { DataSet as _DataSet } from './element-dataset';
 import { HTMLTemplate } from './html-template';
 import { ManagedStylesheet } from './managed-stylesheet';
 
@@ -135,9 +136,10 @@ export namespace DOM {
   }
 
   export import Layout = _Layout;
+  export import Properties = _Properties;
   export import Attributes = _Attributes;
   export import Styles = _Styles;
-  export import Properties = _Properties;
+  export import DataSet = _DataSet;
   export const appendDynamicText = DynamicText.appendDynamicText;
   export const appendDynamicNodeRange = DynamicNodes.appendDynamicDOMNodeRange;
   export const appendDynamicMarkdown = DynamicMarkdown.appendDynamicMarkdown;

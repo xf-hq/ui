@@ -299,6 +299,16 @@ export namespace DOMContext {
         return new DOMView.ContextBound(context);
       }
 
+      setProperty (name: string, value: BasicPrimitiveData) {
+        DOM.Properties.set(this, name, value);
+      }
+      setProperties (properties: Record<string, BasicPrimitiveData> | MapData<string, BasicPrimitiveData> | AssociativeRecordData<BasicPrimitiveData>) {
+        DOM.Properties.set(this, properties);
+      }
+      removeProperty (name: string) {
+        DOM.Properties.unset(this, name);
+      }
+
       setAttribute (name: string, value: BasicPrimitiveData) {
         DOM.Attributes.set(this, name, value);
       }
@@ -319,14 +329,14 @@ export namespace DOMContext {
         DOM.Styles.remove(this, name);
       }
 
-      setProperty (name: string, value: BasicPrimitiveData) {
-        DOM.Properties.set(this, name, value);
+      setData (name: string, value: BasicPrimitiveData): void {
+        DOM.DataSet.set(this, name, value);
       }
-      setProperties (properties: Record<string, BasicPrimitiveData> | MapData<string, BasicPrimitiveData> | AssociativeRecordData<BasicPrimitiveData>) {
-        DOM.Properties.set(this, properties);
+      setDataSet (data: Record<string, BasicPrimitiveData> | MapData<string, BasicPrimitiveData> | AssociativeRecordData<BasicPrimitiveData>): void {
+        DOM.DataSet.set(this, data);
       }
-      removeProperty (name: string) {
-        DOM.Properties.unset(this, name);
+      removeData (name: string): void {
+        DOM.DataSet.remove(this, name);
       }
 
       private _returnDisposableForDynamicRendered (disposable: Disposable) {
