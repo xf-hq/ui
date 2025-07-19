@@ -282,6 +282,31 @@ export namespace DOMContext {
         return this._returnDisposableForDynamicRendered(disposable);
       }
 
+      /**
+       * Alias for {@link DOMNodeRange.querySelectorRequired `DOMNodeRange.querySelectorRequired`}.
+       */
+      querySelector (selector: string): Element;
+      querySelector<TElement extends Element> (selector: string, as: new (...args: any) => TElement): TElement;
+      querySelector<TElement extends Element> (selector: string, as?: new (...args: any) => TElement): TElement {
+        return this.domActiveRange.querySelectorRequired(selector, as!);
+      }
+      /**
+       * Alias for {@link DOMNodeRange.querySelectorRequired `DOMNodeRange.querySelectorRequired`}.
+       */
+      querySelectorRequired (selector: string): Element;
+      querySelectorRequired<TElement extends Element> (selector: string, as: new (...args: any) => TElement): TElement;
+      querySelectorRequired<TElement extends Element> (selector: string, as?: new (...args: any) => TElement): TElement {
+        return this.domActiveRange.querySelectorRequired(selector, as!);
+      }
+      /**
+       * Alias for {@link DOMNodeRange.querySelectorAll `DOMNodeRange.querySelectorAll`}.
+       */
+      querySelectorAll (selector: string): Element[];
+      querySelectorAll<TElement extends Element> (selector: string, as: new (...args: any) => TElement): TElement[];
+      querySelectorAll<TElement extends Element> (selector: string, as?: new (...args: any) => TElement): TElement[] {
+        return this.domActiveRange.querySelectorAll(selector, as!);
+      }
+
       extractById<TElement extends Element> (id: string, as?: new (...args: any) => TElement): TElement {
         return isDefined(as)
           ? HTMLTemplate.extractById(id, as, this.domActiveRange)
