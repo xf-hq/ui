@@ -15,7 +15,6 @@
   "optionalDependencies": {
     "remark": "latest",
     "remark-gfm": "latest",
-    "remark-html": "latest",
-    "monaco-editor": "latest"
+    "remark-html": "latest"
   }
 }
