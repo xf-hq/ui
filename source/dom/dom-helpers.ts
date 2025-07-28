@@ -17,8 +17,8 @@ export namespace DOM {
   export function html (html: string): HTMLTemplate;
   export function html (strings: TemplateStringsArray, ...tokens: unknown[]): HTMLTemplate;
   export function html (html_or_strings: string | TemplateStringsArray, ...tokens: unknown[]): HTMLTemplate {
-    const html = TemplateLiteral.maybeStaticJoin(html_or_strings, tokens).split('\n').map((line) => line.trim()).join('');
-    return HTMLTemplate.define(html.trim());
+    const lines: string[] = TemplateLiteral.maybeStaticJoin(html_or_strings, tokens).split('\n').map((line) => line.trim());
+    return HTMLTemplate.define(lines.join('\n'));
   }
 
   export const css = ManagedStylesheet.onDemand;

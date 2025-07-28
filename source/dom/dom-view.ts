@@ -74,7 +74,7 @@ export namespace DOMView {
     readonly #context: TContext;
 
     override get nodes (): DOMNodeRange { return this.context.domActiveRange; }
-    protected get context (): TContext { return this.#context; }
+    get context (): TContext { return this.#context; }
   }
   namespace ContextBoundDOMView {
     class ContextBoundDOMViewWithComponents<TContext extends DOMContext, TComponents> extends ContextBoundDOMView {
