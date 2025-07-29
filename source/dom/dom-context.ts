@@ -364,6 +364,13 @@ export namespace DOMContext {
         DOM.DataSet.remove(this, name);
       }
 
+      onClick (listener: (event: MouseEvent) => void): DisposableFunction {
+        return DOM.Events.onClick(this.domActiveRange, listener, { signal: this.abort.signal });
+      }
+      onClickOrTap (listener: (event: MouseEvent | TouchEvent) => void): DisposableFunction {
+        return DOM.Events.onClickOrTap(this.domActiveRange, listener, { signal: this.abort.signal });
+      }
+
       private _returnDisposableForDynamicRendered (disposable: Disposable) {
         this.disposables.add(disposable);
         return disposableFunction(() => {

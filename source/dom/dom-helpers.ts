@@ -2,14 +2,15 @@ import { randomCamelCaseIdentifier } from '@xf-common/general/code';
 import { FnCC } from '@xf-common/general/factories-and-latebinding';
 import { TemplateLiteral } from '@xf-common/primitive';
 import { DOMConnectedness } from './dom-connectedness';
-import * as _Layout from './dom-layout-helpers.internal';
+import * as _Events from './dom-events';
+import * as _Layout from './dom-layout-helpers';
 import * as DynamicMarkdown from './dynamic-markdown';
 import * as DynamicNodes from './dynamic-nodes';
 import * as DynamicText from './dynamic-text';
 import { Attributes as _Attributes } from './element-attributes';
-import { Styles as _Styles } from './element-styles';
-import { Properties as _Properties } from './element-properties';
 import { DataSet as _DataSet } from './element-dataset';
+import { Properties as _Properties } from './element-properties';
+import { Styles as _Styles } from './element-styles';
 import { HTMLTemplate } from './html-template';
 import { ManagedStylesheet } from './managed-stylesheet';
 
@@ -140,6 +141,7 @@ export namespace DOM {
   export import Attributes = _Attributes;
   export import Styles = _Styles;
   export import DataSet = _DataSet;
+  export import Events = _Events;
   export const appendDynamicText = DynamicText.appendDynamicText;
   export const appendDynamicNodeRange = DynamicNodes.appendDynamicDOMNodeRange;
   export const appendDynamicMarkdown = DynamicMarkdown.appendDynamicMarkdown;
