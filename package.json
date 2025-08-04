@@ -16,7 +16,6 @@
   },
   "optionalDependencies": {
     "codemirror": "latest",
-    "monaco-editor": "latest",
     "remark": "latest",
     "remark-gfm": "latest",
     "remark-html": "latest"
