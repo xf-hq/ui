@@ -243,9 +243,16 @@ export namespace DOMComponent {
 
   let currentEnv: Templated.DeclarationEnvironment | null = null;
 
-  export function Templated<TComponent extends DOMComponent> (callback: (env: Templated.DeclarationEnvironment) => TComponent): TComponent;
-  export function Templated<TComponent extends DOMComponent> (clsname: string, callback: (env: Templated.DeclarationEnvironment) => TComponent): TComponent;
-
+  export interface Templated<
+    TContext extends DOMContext<TComponents> = DOMContext,
+    TArgs extends unknown[] = unknown[],
+    TView extends DOMView = DOMView,
+    TComponents extends DOMComponent.Components = DOMComponent.Components
+  > extends DOMComponent<TContext, TArgs, TView, TComponents> {
+    readonly cls: DOM.CSS.NamingScope;
+  }
+  export function Templated<TComponent extends Templated> (callback: (env: Templated.DeclarationEnvironment) => TComponent): TComponent;
+  export function Templated<TComponent extends Templated> (clsname: string, callback: (env: Templated.DeclarationEnvironment) => TComponent): TComponent;
   export function Templated<
     TContext extends DOMContext,
     TArgs extends unknown[],
@@ -355,12 +362,15 @@ export namespace DOMComponent {
       export interface DefineComponent {
         <TContext extends DOMContext<TComponents>, TArgs extends unknown[], TView extends DOMView, TComponents extends Components>(
           config: Config<TContext, TArgs, TView, TComponents>,
-        ): DOMComponent<TContext, TArgs, TView, TComponents>;
+        ): Templated<TContext, TArgs, TView, TComponents>;
       }
       export const defineComponent = (env: DeclarationEnvironment): DefineComponent => (config) => new Component(env, config);
     }
     export class DeclarationEnvironment {
       constructor (
+        /**
+         * e.g. `['foo', 'bar']` would represent `foo--bar`
+         */
         public readonly baseClassName: readonly string[],
         cssNamingScope?: DOM.CSS.NamingScope,
       ) {
@@ -371,6 +381,8 @@ export namespace DOMComponent {
       #defineComponent?: DeclarationCallback.DefineComponent;
 
       get env (): DeclarationEnvironment { return this; }
+      /** alias for {@link clsname} */
+      get cls () { return this.#cssNamingScope ??= DOM.CSS.NamingScope(this.baseClassName); }
       get clsname () { return this.#cssNamingScope ??= DOM.CSS.NamingScope(this.baseClassName); }
       /** Utility that returns the same as `clsname` but prefixed with a `.` character. */
       get clssel () { return this.clsname.selector; }
@@ -389,7 +401,7 @@ export namespace DOMComponent {
       TArgs extends unknown[],
       TView extends DOMView,
       TComponents extends Components
-    > implements DOMComponent<TContext, TArgs, TView, TComponents> {
+    > implements Templated<TContext, TArgs, TView, TComponents> {
 
       constructor (
         env: DeclarationEnvironment,
@@ -403,6 +415,7 @@ export namespace DOMComponent {
       #styles?: ManagedStylesheet.OnDemandRuleSet | null;
       #template?: HTMLTemplate;
 
+      get cls (): DOM.CSS.NamingScope { return this.#env.cls; }
       get styles (): ManagedStylesheet.OnDemandRuleSet | null {
         if (this.#styles) return this.#styles;
         if (isUndefined(this.#config.css)) return this.#styles = null;

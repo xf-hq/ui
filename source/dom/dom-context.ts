@@ -21,36 +21,29 @@ export interface DOMContext<TComponents extends DOMComponent.Components = DOMCom
 }
 export namespace DOMContext {
   const _domActiveRange_ = Symbol('DOMContext.DOMActiveRange');
-  const _insertionLocation_ = Symbol('DOMContext.InsertionLocation');
-  const _stylesheet_ = Symbol('DOMContext.Stylesheet');
-  const _detachedByDefault_ = Symbol('DOMContext.DetachedByDefault');
 
   type SpecialMethods<TComponents extends DOMComponent.Components> = Pick<DOMContext<TComponents>, 'renderComponent' | 'renderComponentToTemplateId' | 'renderComponentInto' | 'renderComponentDetached'>;
 
   export type InterfaceType = typeof InterfaceType;
   export const InterfaceType = Context.Immediate.InterfaceType.extend(($Class) => (
     class DOMContext<TComponents extends DOMComponent.Components = DOMComponent.Components> extends $Class.EntityInstance implements SpecialMethods<TComponents> {
-      private [_domActiveRange_]?: DOMNodeRange;
-      private [_insertionLocation_]?: DOMLocationPointer;
-      private [_stylesheet_]?: ManagedStylesheet;
-      private [_detachedByDefault_]?: boolean;
-
-      get domActiveRange () { return this[_domActiveRange_] ??= this.query(DOMContextQueryTypes.ActiveDOMRange); }
-      get domInsertionLocation () { return this[_insertionLocation_] ??= this.unbind(DOMContextBindings.DOM.InsertionLocation); }
-      get stylesheet () { return this[_stylesheet_] ??= this.unbind(DOMContextBindings.StyleSheet.Driver); }
+      get domActiveRange () { return this.query(DOMContextQueryTypes.ActiveDOMRange); }
+      get domInsertionLocation () { return this.unbind(DOMContextBindings.DOM.InsertionLocation); }
+      get stylesheet () { return this.unbind(DOMContextBindings.StyleSheet.Driver); }
       get classList () { return this.domActiveRange.firstActiveElementRequired.classList; }
-      protected get detachedByDefault () { return this[_detachedByDefault_] ??= this.unbind(DOMContextBindings.DOM.DetachedByDefault); }
+
+      protected get detachedByDefault () { return this.unbind(DOMContextBindings.DOM.DetachedByDefault); }
 
       bindStyleSheet (stylesheet: ManagedStylesheet): this {
         return this.bind(DOMContextBindings.StyleSheet, stylesheet);
       }
 
-      bindDOMRange (dom: ChildNode | DOMNodeRange): this {
+      bindDOMRange<TContext extends DOMContext> (this: TContext, dom: ChildNode | DOMNodeRange): TContext {
         if (!isDOMNodeRange(dom)) dom = DOMNodeRange.FromStaticNode(dom);
         return this.bind(DOMContextBindings.DOM.ActiveRange, dom);
       }
 
-      bindDOMLocation (location: Element | DOMNodeRange | DOMLocationPointer | DOMLocationPointer.Props | string): this {
+      bindDOMLocation<TContext extends DOMContext> (this: TContext, location: Element | DOMNodeRange | DOMLocationPointer | DOMLocationPointer.Props | string): TContext {
         if (isString(location)) location = this.domActiveRange.querySelectorRequired(location);
         return bindDOMLocationPointer(this, location);
       }
@@ -60,10 +53,14 @@ export namespace DOMContext {
        * If a string is passed, it is interpreted as a CSS selector and will be passed to `querySelectorRequired` on the
        * active DOM node range for this context.
        */
-      bindDOM (dom: Element | DOMNodeRange | DOMView | string): this {
+      bindDOM<TContext extends DOMContext> (this: TContext, dom: Element | DOMNodeRange | DOMView | string): TContext;
+      bindDOM<TContext extends DOMContext, R> (this: TContext, dom: Element | DOMNodeRange | DOMView | string, callback: (context: TContext) => Exclude<R, void>): R;
+      bindDOM<TContext extends DOMContext> (this: TContext, dom: Element | DOMNodeRange | DOMView | string, callback: (context: TContext) => void): TContext;
+      bindDOM<TContext extends DOMContext> (this: TContext, dom: Element | DOMNodeRange | DOMView | string, callback?: (context: TContext) => any) {
         if (isString(dom)) dom = this.domActiveRange.querySelectorRequired(dom);
         else if (isDOMView(dom)) dom = dom.nodes;
-        return this.bindDOMRange(dom).bindDOMLocation(dom);
+        const context = this.bindDOMRange(dom).bindDOMLocation(dom);
+        return isDefined(callback) ? callback(context) : context;
       }
 
       /**
@@ -72,7 +69,7 @@ export namespace DOMContext {
        * a new active DOM insertion location with the element as the parent element thereof. The newly bound context is
        * then returned.
        */
-      bindDOMTemplateSlotById (id: string): this {
+      bindDOMTemplateSlotById<TContext extends DOMContext> (this: TContext, id: string): TContext {
         const element = HTMLTemplate.extractById(id, this.domActiveRange);
 
         // TODO: If the slot id was referenced earlier, the id attribute will have been removed from the element to

@@ -29,7 +29,7 @@ export class ManagedStylesheet implements Disposable {
 
   insertRule (cssText: string): ManagedStylesheet.Rule {
     const sheet = this.#sheet;
-    const index = sheet.insertRule(cssText);
+    const index = sheet.insertRule(cssText, sheet.cssRules.length);
     const rule = sheet.cssRules.item(index)!;
     return new StyleRule(sheet, rule);
   }
