@@ -1,5 +1,5 @@
 {
-  "name": "sx-ui",
+  "name": "xf-ui",
   "main": "source/index.ts",
   "module": "source/index.ts",
   "type": "module",
@@ -12,6 +12,7 @@
     "typescript-eslint": "^8.35.0"
   },
   "dependencies": {
+    "xf-common": "workspace:*",
     "@wessberg/connection-observer": "latest"
   },
   "optionalDependencies": {
