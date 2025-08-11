@@ -230,6 +230,11 @@ export namespace DOMComponent {
   > = {
     readonly Component: DOMComponent<TContext, TArgs, TView, TComponents>;
   };
+  export namespace NS {
+    export type InferView<T extends NS> = T extends NS<any, any, infer TView, any> ? TView : never;
+    export type InferArgs<T extends NS> = T extends NS<any, infer TArgs, any> ? TArgs : never;
+  }
+
   export type OrNS<
     TContext extends DOMContext<TComponents> = DOMContext,
     TArgs extends unknown[] = unknown[],

@@ -1,4 +1,4 @@
-import { Future, Monitor, type ArraySource, type AssociativeRecordData, type BasicPrimitiveData, type BooleanData, type MapData, type NumberData, type NumberSource, type StringData, type StringSource, type ValueSource } from '@xf-common/dynamic';
+import { ArraySource, Future, Monitor, type AssociativeRecordData, type BasicPrimitiveData, type BooleanData, type MapData, type NumberData, type NumberSource, type StringData, type StringSource, type ValueSource } from '@xf-common/dynamic';
 import type { Compositional } from '@xf-common/facilities/compositional/compositional';
 import { Context } from '@xf-common/facilities/context';
 import { isArray, isDefined, isString } from '@xf-common/general/type-checking';
@@ -98,7 +98,7 @@ export namespace DOMContext {
       }
 
       render<TContext extends DOMContext, TTarget extends DOMComponent.OrNS> (this: TContext, target: TTarget, ...args: DOMComponent.OrNS.InferArgs<TTarget>): DOMComponent.OrNS.InferView<TTarget>;
-      render<TContext extends DOMContext, TArgs extends unknown[], TView extends DOMView> (this: TContext, target: DOMComponent.OrNS<TContext, TArgs, TView>, ...args: TArgs): TView;
+      render<TContext extends DOMContext, TArgs extends unknown[] = unknown[], TView extends DOMView = DOMView> (this: TContext, target: DOMComponent.OrNS<TContext, TArgs, TView>, ...args: TArgs): TView;
       render<TContext extends DOMContext, TArgs extends unknown[], TView extends DOMView> (this: TContext, target: DOMComponent.OrNS<TContext, TArgs, TView>, ...args: TArgs) {
         const view = this._render(target, args);
         if (!this.detachedByDefault) {
@@ -238,13 +238,20 @@ export namespace DOMContext {
         const disposable = DOM.appendDynamicText(this.domInsertionLocation, source);
         return this._returnDisposableForDynamicRendered(disposable);
       }
+      renderDynamicMarkdown (source: StringSource, options?: DynamicMarkdownOptions) {
+        const disposable = DOM.appendDynamicMarkdown(this.domInsertionLocation, source, options);
+        return this._returnDisposableForDynamicRendered(disposable);
+      }
       renderDynamicNodeRange (source: ArraySource<DOMNodeRange>) {
         const disposable = DOM.appendDynamicNodeRange(this.domInsertionLocation, source);
         return this._returnDisposableForDynamicRendered(disposable);
       }
-      renderDynamicMarkdown (source: StringSource, options?: DynamicMarkdownOptions) {
-        const disposable = DOM.appendDynamicMarkdown(this.domInsertionLocation, source, options);
-        return this._returnDisposableForDynamicRendered(disposable);
+      renderDynamicArray<TContext extends DOMContext, TModel, TView extends DOMView> (this: TContext, source: ArraySource<TModel>, renderItem: (context: TContext, model: TModel) => TView): ArraySource<TView> {
+        const context = this.bind(DOMContextBindings.DOM.DetachedByDefault, true);
+        const views = ArraySource.mapToDisposable((item) => renderItem(context, item), source);
+        const nodes = ArraySource.map((view) => view.nodes, views);
+        this.disposables.add(this.renderDynamicNodeRange(nodes));
+        return views;
       }
 
       renderDynamicTextInto (selector: string, source: ValueSource<Primitive>) {
@@ -252,15 +259,18 @@ export namespace DOMContext {
         const disposable = DOM.appendDynamicText(location, source);
         return this._returnDisposableForDynamicRendered(disposable);
       }
+      renderDynamicMarkdownInto (selector: string, source: StringSource, options?: DynamicMarkdownOptions) {
+        const location = DOMLocationPointer.from(this.domActiveRange.querySelectorRequired(selector));
+        const disposable = DOM.appendDynamicMarkdown(location, source, options);
+        return this._returnDisposableForDynamicRendered(disposable);
+      }
       renderDynamicNodeRangeInto (selector: string, source: ArraySource<DOMNodeRange>) {
         const location = DOMLocationPointer.from(this.domActiveRange.querySelectorRequired(selector));
         const disposable = DOM.appendDynamicNodeRange(location, source);
         return this._returnDisposableForDynamicRendered(disposable);
       }
-      renderDynamicMarkdownInto (selector: string, source: StringSource, options?: DynamicMarkdownOptions) {
-        const location = DOMLocationPointer.from(this.domActiveRange.querySelectorRequired(selector));
-        const disposable = DOM.appendDynamicMarkdown(location, source, options);
-        return this._returnDisposableForDynamicRendered(disposable);
+      renderDynamicArrayInto<TContext extends DOMContext, TModel, TView extends DOMView> (this: TContext, selector: string, source: ArraySource<TModel>, renderItem: (context: TContext, model: TModel) => TView): ArraySource<TView> {
+        return this.bindDOM(selector).renderDynamicArray(source, renderItem);
       }
 
       renderDynamicTextToTemplateId (id: string, source: ValueSource<Primitive>) {
@@ -268,15 +278,18 @@ export namespace DOMContext {
         const disposable = DOM.appendDynamicText(location, source);
         return this._returnDisposableForDynamicRendered(disposable);
       }
+      renderDynamicMarkdownToTemplateId (id: string, source: StringSource, options?: DynamicMarkdownOptions) {
+        const location = this.bindDOMTemplateSlotById(id).domInsertionLocation;
+        const disposable = DOM.appendDynamicMarkdown(location, source, options);
+        return this._returnDisposableForDynamicRendered(disposable);
+      }
       renderDynamicNodeRangeToTemplateId (id: string, source: ArraySource<DOMNodeRange>) {
         const location = this.bindDOMTemplateSlotById(id).domInsertionLocation;
         const disposable = DOM.appendDynamicNodeRange(location, source);
         return this._returnDisposableForDynamicRendered(disposable);
       }
-      renderDynamicMarkdownToTemplateId (id: string, source: StringSource, options?: DynamicMarkdownOptions) {
-        const location = this.bindDOMTemplateSlotById(id).domInsertionLocation;
-        const disposable = DOM.appendDynamicMarkdown(location, source, options);
-        return this._returnDisposableForDynamicRendered(disposable);
+      renderDynamicArrayToTemplateId<TContext extends DOMContext, TModel, TView extends DOMView> (this: TContext, id: string, source: ArraySource<TModel>, renderItem: (context: TContext, model: TModel) => TView): ArraySource<TView> {
+        return this.bindDOMTemplateSlotById(id).renderDynamicArray(source, renderItem);
       }
 
       /**
