@@ -11,7 +11,7 @@ const log = DevtoolsLogger('ServerBridge');
 export class ServerBridge {
   constructor (public readonly network: WebSocketClient) {}
   readonly #pendingRequests = new Map<unknown, RequestDetails>();
-  readonly #activeChannels = new Map<unknown, Messaging.MessageHandler>();
+  readonly #activeChannels = new Map<unknown, { router: Messaging.V2.MessageHandler; args: any[] }>();
   readonly #responseHandler: Messaging.MessageHandler = { handleMessage: (context: Messaging.InboundMessageContext<Messaging.Message.Response.Data>) => this._receiveResponse(context.messageData) };
   readonly #updateHandler: Messaging.MessageHandler = { handleMessage: (context: Messaging.InboundMessageContext<Messaging.Message.Update.Data>) => this._receiveUpdate(context.messageData) };
 
@@ -95,7 +95,7 @@ export class ServerBridge {
     const channel = this.#activeChannels.get(ref);
     if (!channel) return;
     const context = new InboundMessageFromServer(PathLens.from(':', update.message.type), update.message.data, ref);
-    channel.handleMessage(context);
+    channel.router.handleMessage(context, ...channel.args);
   }
 }
 export namespace ServerBridge {
@@ -107,7 +107,7 @@ export namespace ServerBridge {
   export class PersistentChannel {
     constructor (
       private readonly _server: ServerBridge,
-      private readonly _activeChannels: Map<unknown, Messaging.MessageHandler>,
+      private readonly _activeChannels: Map<unknown, { router: Messaging.V2.MessageHandler; args: any[] }>,
       private readonly _ref: unknown,
       abortSignal: AbortSignal
     ) {
@@ -119,8 +119,8 @@ export namespace ServerBridge {
 
     get abortSignal (): AbortSignal { return this.#abortController.signal; }
 
-    set router (handler: Messaging.MessageHandler) {
-      this._activeChannels.set(this._ref, handler);
+    setRouter<A extends any[]> (router: Messaging.V2.MessageHandler<Messaging.InboundMessageContext, A>, ...args: A): void {
+      this._activeChannels.set(this._ref, { router, args });
     }
 
     send (message: Messaging.Message): void;
