@@ -72,7 +72,7 @@ export class ServerBridge {
     request.abortSignal.removeEventListener('abort', request.abortListener);
     const messageType = PathLens.from(':', response.message.type);
     const messageData = response.message.data;
-    const context = new InboundMessageFromServer(messageType, messageData, ref);
+    const context = new InboundMessageFromServer(response.message, messageType, messageData, ref);
     if (request.kind === 'transient') {
       if (response.persistent) {
         log.warn(`Singular request yielded a persistent channel response. The request will be cancelled automatically, but the response will still be delivered.`);
@@ -94,7 +94,7 @@ export class ServerBridge {
     const ref = update.ref;
     const channel = this.#activeChannels.get(ref);
     if (!channel) return;
-    const context = new InboundMessageFromServer(PathLens.from(':', update.message.type), update.message.data, ref);
+    const context = new InboundMessageFromServer(update.message, PathLens.from(':', update.message.type), update.message.data, ref);
     channel.router.handleMessage(context, ...channel.args);
   }
 }
@@ -163,12 +163,13 @@ interface PersistentRequestDetails extends BaseRequestDetails {
 
 export class InboundMessageFromServer implements Messaging.InboundMessageContext {
   constructor (
+    public readonly message: Messaging.Message,
     public readonly messageType: PathLens,
     public readonly messageData: unknown,
     private readonly _ref: unknown
   ) {}
 
   withMessageType (messageType: PathLens, current: this): this {
-    return new InboundMessageFromServer(messageType, current.messageData, current._ref) as this;
+    return new InboundMessageFromServer(current.message, messageType, current.messageData, current._ref) as this;
   }
 }
