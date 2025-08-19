@@ -40,7 +40,7 @@ export class ServerBridge {
     abortSignal.addEventListener('abort', abortListener, { once: true });
   }
 
-  open (abortSignal: AbortSignal, requestType: string, requestData: unknown, callback: ServerBridge.OnOpenChannelResponse): void;
+  open<TRequestData> (abortSignal: AbortSignal, requestType: string, requestData: TRequestData, callback: ServerBridge.OnOpenChannelResponse): void;
   open (abortSignal: AbortSignal, request: Messaging.Message, callback: ServerBridge.OnOpenChannelResponse): void;
   open (abortSignal: AbortSignal, arg1: string | Messaging.Message, arg2: unknown, callback?: ServerBridge.OnOpenChannelResponse): void {
     let request: Messaging.Message;

@@ -1,6 +1,8 @@
-import { ArraySource, Future, Monitor, type AssociativeRecordData, type BasicPrimitiveData, type BooleanData, type MapData, type NumberData, type NumberSource, type StringData, type StringSource, type ValueSource } from '@xf-common/dynamic';
+import { ArraySource, Async, Future, isAsync, isValueSource, Monitor, StringData, type AssociativeRecordData, type BasicPrimitiveData, type MapData, type StringSource, type ValueSource } from '@xf-common/dynamic';
+import { isOnDemandAsync } from '@xf-common/dynamic/async/on-demand-async';
 import type { Compositional } from '@xf-common/facilities/compositional/compositional';
 import { Context } from '@xf-common/facilities/context';
+import { disposableFunction, dispose } from '@xf-common/general/disposables';
 import { isArray, isDefined, isString } from '@xf-common/general/type-checking';
 import { renderMarkdownToHtmlSync } from '../markdown/markdown-helpers';
 import { DOMComponent, isDOMComponent } from './dom-component';
@@ -11,7 +13,6 @@ import { DOMView, isDOMView } from './dom-view';
 import type { DynamicMarkdownOptions } from './dynamic-markdown';
 import { HTMLTemplate } from './html-template';
 import type { ManagedStylesheet } from './managed-stylesheet';
-import { disposableFunction, dispose } from '@xf-common/general/disposables';
 
 export interface DOMContext<TComponents extends DOMComponent.Components = DOMComponent.Components> extends Compositional.ExtractInterface<typeof DOMContext.InterfaceType> {
   renderComponent<K extends keyof TComponents> (componentIdentifier: K, ...args: DOMComponent.InferArgs<TComponents[K]>): DOMComponent.InferView<TComponents[K]>;
@@ -106,7 +107,7 @@ export namespace DOMContext {
         }
         return view;
       }
-      renderText (text: unknown = ''): DOMView.StaticTextNode {
+      renderText (text: Primitive = ''): DOMView.StaticTextNode {
         const textNode = document.createTextNode(String(text));
         this.domInsertionLocation.append(textNode);
         return DOMView.StaticTextNode(textNode);
@@ -132,7 +133,7 @@ export namespace DOMContext {
       renderInto<TContext extends DOMContext, TArgs extends unknown[], TView extends DOMView> (this: TContext, selector: string, target: DOMComponent.OrNS<TContext, TArgs, TView>, ...args: TArgs): TView {
         return this.bindDOM(selector).render(target, ...args);
       }
-      renderTextInto (selector: string, text: unknown = ''): DOMView.StaticTextNode {
+      renderTextInto (selector: string, text: Primitive = ''): DOMView.StaticTextNode {
         return this.bindDOM(selector).renderText(text);
       }
       renderHTMLInto (selector: string, html: string): DOMNodeRange {
@@ -149,7 +150,7 @@ export namespace DOMContext {
       renderToTemplateId<TContext extends DOMContext, TArgs extends unknown[], TView extends DOMView> (this: TContext, id: string, target: DOMComponent.OrNS<TContext, TArgs, TView>, ...args: TArgs): TView {
         return this.bindDOMTemplateSlotById(id).render(target, ...args);
       }
-      renderTextToTemplateId (id: string, text: unknown = ''): DOMView.StaticTextNode {
+      renderTextToTemplateId (id: string, text: Primitive = ''): DOMView.StaticTextNode {
         return this.bindDOMTemplateSlotById(id).renderText(text);
       }
       renderHTMLToTemplateId (id: string, html: string): DOMNodeRange {
@@ -290,6 +291,24 @@ export namespace DOMContext {
       }
       renderDynamicArrayToTemplateId<TContext extends DOMContext, TModel, TView extends DOMView> (this: TContext, id: string, source: ArraySource<TModel>, renderItem: (context: TContext, model: TModel) => TView): ArraySource<TView> {
         return this.bindDOMTemplateSlotById(id).renderDynamicArray(source, renderItem);
+      }
+
+      renderTextData (textData: StringData) {
+        if (isString(textData)) this.renderText(textData);
+        else if (isValueSource(textData)) this.renderDynamicText(textData);
+        else if (isOnDemandAsync(textData)) {
+          const async = textData.require();
+          this.disposables.add(async);
+          async.then((textData) => this.renderTextData(textData));
+        }
+        else if (isAsync(textData)) return Async(textData.then((textData) => this.renderTextData(textData)));
+        throw new Error(`Unexpected StringData value`);
+      }
+      renderTextDataInto (selector: string, textData: StringData) {
+        return this.bindDOM(selector).renderTextData(textData);
+      }
+      renderTextDataToTemplateId (id: string, textData: StringData) {
+        return this.bindDOMTemplateSlotById(id).renderTextData(textData);
       }
 
       /**
