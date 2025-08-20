@@ -7,10 +7,7 @@ import * as _Layout from './dom-layout-helpers';
 import * as DynamicMarkdown from './dynamic-markdown';
 import * as DynamicNodes from './dynamic-nodes';
 import * as DynamicText from './dynamic-text';
-import { Attributes as _Attributes } from './element-attributes';
-import { DataSet as _DataSet } from './element-dataset';
-import { Properties as _Properties } from './element-properties';
-import { Styles as _Styles } from './element-styles';
+import { Attributes as _Attributes, DataSet as _DataSet, Properties as _Properties, Styles as _Styles } from './element-assignables';
 import { HTMLTemplate } from './html-template';
 import { ManagedStylesheet } from './managed-stylesheet';
 
