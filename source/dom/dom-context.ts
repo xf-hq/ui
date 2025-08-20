@@ -26,8 +26,8 @@ export namespace DOMContext {
   type SpecialMethods<TComponents extends DOMComponent.Components> = Pick<DOMContext<TComponents>, 'renderComponent' | 'renderComponentToTemplateId' | 'renderComponentInto' | 'renderComponentDetached'>;
 
   export type InterfaceType = typeof InterfaceType;
-  export const InterfaceType = Context.Immediate.InterfaceType.extend(($Class) => (
-    class DOMContext<TComponents extends DOMComponent.Components = DOMComponent.Components> extends $Class.EntityInstance implements SpecialMethods<TComponents> {
+  export const InterfaceType = Context.Immediate.InterfaceType.extend((InterfaceType) => (
+    class DOMContext<TComponents extends DOMComponent.Components = DOMComponent.Components> extends InterfaceType.BaseClass implements SpecialMethods<TComponents> {
       get domActiveRange () { return this.query(DOMContextQueryTypes.ActiveDOMRange); }
       get domInsertionLocation () { return this.unbind(DOMContextBindings.DOM.InsertionLocation); }
       get stylesheet () { return this.unbind(DOMContextBindings.StyleSheet.Driver); }
