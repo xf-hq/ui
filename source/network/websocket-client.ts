@@ -117,6 +117,6 @@ export namespace WebSocketClient {
   export interface Listener {
     receiveMessage (message: Messaging.Message): void;
     disconnectedFromServer? (): void;
-    connectedToServer? (): void;
+    connectedToServer? (isInitial: boolean): void;
   }
 }
