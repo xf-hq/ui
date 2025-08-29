@@ -56,6 +56,7 @@ export class WebSocketClient {
     this.#config.listener.receiveMessage(message);
   }
 
+  #initial = true;
   #connect (wait = 1000) {
     const config = this.#config;
     const { log } = config;
@@ -76,7 +77,8 @@ export class WebSocketClient {
         ws.addEventListener('message', (event: MessageEvent) => self.#receive(event));
         self.#flush();
         self.#ready.resolve();
-        config.listener.connectedToServer?.();
+        config.listener.connectedToServer?.(self.#initial);
+        self.#initial = false;
       }
     });
     ws.addEventListener('close', () => {
