@@ -4,11 +4,11 @@
   "module": "source/index.ts",
   "type": "module",
   "devDependencies": {
-    "@eslint/js": "^9.29.0",
+    "@eslint/js": "latest",
     "@stylistic/eslint-plugin": "^5.0.0",
-    "@types/bun": "^1.2.17",
+    "@types/bun": "latest",
     "@typescript-eslint/tsconfig-utils": "^8.35.0",
-    "eslint": "^9.29.0",
+    "eslint": "latest",
     "typescript-eslint": "^8.35.0"
   },
   "dependencies": {
